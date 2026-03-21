@@ -82,7 +82,7 @@ export const chooseBaseUrl = sdk.Action.withInput(
     warning:
       'Changing the base URL will restart the service. Attachment links in already-delivered notifications will still point to the old URL.',
     allowedStatuses: 'any',
-    group: null,
+    group: 'Configuration',
     visibility: 'enabled',
   }),
 

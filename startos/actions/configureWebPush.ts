@@ -26,15 +26,21 @@ const inputSpec = InputSpec.of({
 export const configureWebPush = sdk.Action.withInput(
   'configure-web-push',
 
-  async ({ effects }) => ({
-    name: 'Configure Web Push',
-    description:
-      'Set the VAPID contact email for browser push notifications. Leave blank to use the default (ntfy@example.com). The service will restart to apply changes.',
-    warning: null,
-    allowedStatuses: 'any',
-    group: null,
-    visibility: 'enabled',
-  }),
+  async ({ effects }) => {
+    const keys = await storeJson.read((s) => s.webPushPublicKey).once()
+    return {
+      name: 'Configure Web Push',
+      description: keys
+        ? 'Set the VAPID contact email for browser push notifications. Leave blank to use the default (ntfy@example.com). The service will restart to apply changes.'
+        : 'VAPID keys were not generated during installation — browser web push notifications are unavailable. Reinstall the service to retry key generation.',
+      warning: null,
+      allowedStatuses: 'any' as const,
+      group: 'Configuration',
+      visibility: keys
+        ? ('enabled' as const)
+        : ({ disabled: 'VAPID keys were not generated. Reinstall the service to retry.' } as const),
+    }
+  },
 
   inputSpec,
 

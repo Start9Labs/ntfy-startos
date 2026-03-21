@@ -29,7 +29,7 @@ export const setLogLevel = sdk.Action.withInput(
       'Change the NTFY server log verbosity. Useful for troubleshooting. The service will restart to apply changes.',
     warning: null,
     allowedStatuses: 'any',
-    group: null,
+    group: 'Configuration',
     visibility: 'enabled',
   }),
 

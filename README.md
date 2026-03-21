@@ -57,13 +57,13 @@ After installing:
 | Action                  | Description |
 | ----------------------- | ----------- |
 | **Set Admin Password**  | Set or change the admin account password. Required before the service will start. |
-| **Get Admin Credentials** | Show the admin username, password, server URL, and VAPID public key. |
-| **Toggle Signup**       | Enable or disable new user self-registration. |
+| **Get Admin Credentials** | Show the admin username, password, current server URL, and VAPID public key. |
+| **Toggle User Registration** | Enable or disable new user self-registration. |
 | **Configure Base URL**  | Choose which address is embedded in attachment links and web push notifications. |
-| **Configure Storage**   | Set attachment size limits and message cache / attachment retention duration. |
+| **Configure Storage**   | Set attachment size limits, total storage cap, per-user quota, and cache retention. |
 | **Configure Web Push**  | Set the contact email for VAPID web push notifications. |
 | **Set Log Level**       | Change server log verbosity (trace / debug / info / warn / error). |
-| **Server Stats**        | View message counts, active visitors, and server version (service must be running). |
+| **Server Stats**        | View message count, active visitors, active topics, and server version (service must be running). |
 
 ## Dependencies
 

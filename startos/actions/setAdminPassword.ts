@@ -7,7 +7,18 @@ const { InputSpec, Value } = sdk
 const inputSpec = InputSpec.of({
   password: Value.text({
     name: 'Admin Password',
-    description: 'Password for the NTFY admin account (username: admin)',
+    description: 'Password for the NTFY admin account (username: admin). Minimum 8 characters.',
+    required: true,
+    default: null,
+    placeholder: null,
+    minLength: 8,
+    maxLength: 128,
+    patterns: [],
+    inputmode: 'text',
+  }),
+  confirmPassword: Value.text({
+    name: 'Confirm Password',
+    description: 'Re-enter the password to confirm.',
     required: true,
     default: null,
     placeholder: null,
@@ -33,10 +44,14 @@ export const setAdminPassword = sdk.Action.withInput(
 
   inputSpec,
 
-  async () => ({ password: undefined }),
+  async () => ({ password: undefined, confirmPassword: undefined }),
 
   async ({ effects, input }) => {
-    const { password } = input
+    const { password, confirmPassword } = input
+
+    if (password !== confirmPassword) {
+      throw new Error('Passwords do not match. Please try again.')
+    }
 
     // Create subcontainer to run ntfy user management CLI
     // IMPORTANT: must mount volume at same path as main.ts (/data) and use same NTFY_AUTH_FILE

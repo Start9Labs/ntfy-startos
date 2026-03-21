@@ -66,7 +66,7 @@ export const configureStorage = sdk.Action.withInput(
       'Adjust attachment size limits, total storage cap, and message retention period. The service will restart to apply changes.',
     warning: null,
     allowedStatuses: 'any',
-    group: null,
+    group: 'Configuration',
     visibility: 'enabled',
   }),
 
@@ -83,6 +83,17 @@ export const configureStorage = sdk.Action.withInput(
   },
 
   async ({ effects, input }) => {
+    if (input.attachmentFileSizeLimit > input.attachmentTotalSizeLimit) {
+      throw new Error(
+        `Per-file limit (${input.attachmentFileSizeLimit} MB) cannot exceed total storage limit (${input.attachmentTotalSizeLimit} MB).`,
+      )
+    }
+    if (input.visitorAttachmentLimit > input.attachmentTotalSizeLimit) {
+      throw new Error(
+        `Per-user quota (${input.visitorAttachmentLimit} MB) cannot exceed total storage limit (${input.attachmentTotalSizeLimit} MB).`,
+      )
+    }
+
     await storeJson.merge(effects, input)
 
     return {
