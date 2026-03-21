@@ -60,6 +60,30 @@ export const setAdminPassword = sdk.Action.withInput(
       NTFY_AUTH_FILE: `${dataDir}/auth.db`,
     }
 
+    // If auth.db doesn't exist yet, start ntfy briefly to initialize it.
+    // ntfy refuses to run user management commands before the server has started at least once.
+    const checkResult = await sub.exec(['test', '-f', `${dataDir}/auth.db`])
+    if (checkResult.exitCode !== 0) {
+      const initResult = await sub.exec(
+        [
+          'sh', '-c',
+          `ntfy serve & PID=$!; I=0; while [ $I -lt 30 ] && [ ! -f ${dataDir}/auth.db ]; do sleep 0.2; I=$((I+1)); done; kill $PID 2>/dev/null; wait $PID 2>/dev/null; [ -f ${dataDir}/auth.db ]`,
+        ],
+        {
+          env: {
+            NTFY_AUTH_FILE: `${dataDir}/auth.db`,
+            NTFY_CACHE_FILE: `${dataDir}/cache.db`,
+            NTFY_LISTEN_HTTP: ':19080',
+            NTFY_AUTH_DEFAULT_ACCESS: 'deny-all',
+            NTFY_LOG_LEVEL: 'warn',
+          },
+        },
+      )
+      if (initResult.exitCode !== 0) {
+        throw new Error('Failed to initialize auth.db: ntfy did not create the database. Check service logs.')
+      }
+    }
+
     // Try to create admin user; if it already exists, change the password instead
     const addResult = await sub.exec(
       ['ntfy', 'user', 'add', '--role=admin', 'admin'],
