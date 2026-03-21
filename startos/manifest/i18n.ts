@@ -1,20 +1,23 @@
 export const short = {
-  en_US: 'Bare bones example of a StartOS service',
-  es_ES: 'Ejemplo básico de un servicio de StartOS',
-  de_DE: 'Minimales Beispiel eines StartOS-Dienstes',
-  pl_PL: 'Podstawowy przykład usługi StartOS',
-  fr_FR: "Exemple minimaliste d'un service StartOS",
+  en_US: 'Self-hosted push notification service',
 }
 
 export const long = {
   en_US:
-    'Hello World is a template service that provides examples of basic StartOS features.',
-  es_ES:
-    'Hello World es un servicio de plantilla que proporciona ejemplos de las características básicas de StartOS.',
-  de_DE:
-    'Hello World ist ein Vorlagen-Dienst, der Beispiele für grundlegende StartOS-Funktionen bietet.',
-  pl_PL:
-    'Hello World to szablon usługi, który zawiera przykłady podstawowych funkcji StartOS.',
-  fr_FR:
-    'Hello World est un service modèle qui fournit des exemples des fonctionnalités de base de StartOS.',
+    'NTFY is a simple, privacy-first pub/sub push notification service. Send notifications to your phone or browser from any script, cron job, or service — no account required. Self-hosted on your StartOS server with multi-user support, topic-based access control, file attachments, and web push.',
+}
+
+export const alertInstall = {
+  en_US:
+    "After installing, open Actions and run 'Set Admin Password'. The service will not start until this is complete.",
+}
+
+export const alertRestore = {
+  en_US:
+    "Your users, passwords, topic ACLs, attachments, and web push subscriptions are restored from backup. If your server URL has changed, update it via 'Configure Base URL' — attachment links in previously delivered notifications will point to the old URL.",
+}
+
+export const alertUpdate = {
+  en_US:
+    'NTFY will automatically perform any necessary database migrations on first start after updating. Your data, users, and settings are preserved.',
 }

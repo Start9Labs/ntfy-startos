@@ -1,28 +1,28 @@
 import { setupManifest } from '@start9labs/start-sdk'
-import { long, short } from './i18n'
+import { long, short, alertInstall, alertRestore, alertUpdate } from './i18n'
 
 export const manifest = setupManifest({
-  id: 'hello-world',
-  title: 'Hello World',
-  license: 'MIT',
-  packageRepo: 'https://github.com/Start9Labs/hello-world-startos/tree/update/040',
-  upstreamRepo: 'https://github.com/Start9Labs/hello-world',
-  marketingUrl: 'https://start9.com/',
-  donationUrl: 'https://donate.start9.com/',
-  docsUrls: ['https://github.com/Start9Labs/hello-world/blob/master/README.md'],
+  id: 'ntfy',
+  title: 'NTFY',
+  license: 'Apache-2.0',
+  packageRepo: 'https://github.com/Start9Labs/ntfy-startos',
+  upstreamRepo: 'https://github.com/binwiederhier/ntfy',
+  marketingUrl: 'https://ntfy.sh/',
+  donationUrl: 'https://github.com/sponsors/binwiederhier',
+  docsUrls: ['https://docs.ntfy.sh/'],
   description: { short, long },
   volumes: ['main'],
   images: {
-    'hello-world': {
-      source: { dockerTag: 'ghcr.io/start9labs/hello-world:2.0.0' },
-      arch: ['x86_64', 'aarch64', 'riscv64'],
+    main: {
+      source: { dockerTag: 'binwiederhier/ntfy:v2.19.2' },
+      arch: ['x86_64', 'aarch64'],
     },
   },
   alerts: {
-    install: null,
-    update: null,
+    install: alertInstall,
+    update: alertUpdate,
     uninstall: null,
-    restore: null,
+    restore: alertRestore,
     start: null,
     stop: null,
   },
