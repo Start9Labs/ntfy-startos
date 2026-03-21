@@ -1,8 +1,7 @@
 import { i18n } from './i18n'
 import { sdk } from './sdk'
-import { uiPort, dataDir } from './utils'
+import { uiPort, dataDir, pickFallbackUrl } from './utils'
 import { storeJson } from './fileModels/store.json'
-import type { ServiceInterfaceFilled } from '@start9labs/start-sdk/base/lib/util/getServiceInterface'
 
 export const main = sdk.setupMain(async ({ effects }) => {
   console.info(i18n('Starting NTFY!'))
@@ -75,18 +74,3 @@ export const main = sdk.setupMain(async ({ effects }) => {
   })
 })
 
-/**
- * Pick the best fallback base URL from the service's interface addresses.
- * Used when the user has not configured a base URL via the action.
- *
- * Priority: mDNS (LAN/home network) → any other non-local HTTP address.
- */
-function pickFallbackUrl(i: ServiceInterfaceFilled | null): string | null {
-  const addr = i?.addressInfo
-  if (!addr) return null
-
-  const mdns = addr.filter({ kind: 'mdns' }).format().find((u) => u.startsWith('http'))
-  if (mdns) return mdns
-
-  return addr.nonLocal.format().find((u) => u.startsWith('http')) ?? null
-}

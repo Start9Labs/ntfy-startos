@@ -83,12 +83,7 @@ export const configureStorage = sdk.Action.withInput(
   },
 
   async ({ effects, input }) => {
-    await storeJson.merge(effects, {
-      attachmentFileSizeLimit: input.attachmentFileSizeLimit,
-      attachmentTotalSizeLimit: input.attachmentTotalSizeLimit,
-      visitorAttachmentLimit: input.visitorAttachmentLimit,
-      cacheDuration: input.cacheDuration,
-    })
+    await storeJson.merge(effects, input)
 
     return {
       version: '1' as const,

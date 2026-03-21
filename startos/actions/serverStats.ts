@@ -36,12 +36,14 @@ export const serverStats = sdk.Action.withoutInput(
     const messages = String(stats?.messages ?? 'unknown')
     const messagesRate = stats?.messages_rate !== undefined ? `${Number(stats.messages_rate).toFixed(2)}/s` : null
     const visitors = String(stats?.visitors ?? 'unknown')
+    const topics = stats?.topics !== undefined ? String(stats.topics) : null
 
     const lines: string[] = [
       version ? `Server version: ${version}` : null,
       `Messages in cache: ${messages}`,
       messagesRate ? `Message rate: ${messagesRate}` : null,
       `Active visitors: ${visitors}`,
+      topics ? `Active topics: ${topics}` : null,
     ].filter((l): l is string => l !== null)
 
     return {

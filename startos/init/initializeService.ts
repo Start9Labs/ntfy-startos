@@ -4,24 +4,32 @@ import { setAdminPassword } from '../actions/setAdminPassword'
 import { dataDir } from '../utils'
 
 export const initializeService = sdk.setupOnInit(async (effects) => {
-  const sub = await sdk.SubContainer.of(
-    effects,
-    { imageId: 'main' },
-    sdk.Mounts.of().mountVolume({
-      volumeId: 'main',
-      subpath: null,
-      mountpoint: dataDir,
-      readonly: false,
-    }),
-    'ntfy-init-sub',
-  )
+  // Lazily create SubContainer — only needed on fresh install or pre-VAPID restore.
+  let sub: Awaited<ReturnType<typeof sdk.SubContainer.of>> | null = null
+  const getSub = async () => {
+    if (!sub) {
+      sub = await sdk.SubContainer.of(
+        effects,
+        { imageId: 'main' },
+        sdk.Mounts.of().mountVolume({
+          volumeId: 'main',
+          subpath: null,
+          mountpoint: dataDir,
+          readonly: false,
+        }),
+        'ntfy-init-sub',
+      )
+    }
+    return sub
+  }
 
   // Generate VAPID keys if not present.
   // This runs on fresh install AND when restoring from a backup that predates VAPID support.
   const existingPublicKey = await storeJson.read((s) => s.webPushPublicKey).once()
   if (!existingPublicKey) {
+    const result = await (await getSub()).exec(['ntfy', 'webpush', 'keys'])
+
     // REVIEW: verify exact output format against ntfy v2.19.2
-    const result = await sub.exec(['ntfy', 'webpush', 'keys'])
     const stdout = String(result.stdout || '')
 
     const pubMatch = stdout.match(/NTFY_WEB_PUSH_PUBLIC_KEY=(\S+)/)
@@ -45,10 +53,10 @@ export const initializeService = sdk.setupOnInit(async (effects) => {
   if (!adminPassword) {
     // ntfy user add refuses to run if auth.db does not exist ("please start the server at least once").
     // Start ntfy briefly to initialize auth.db and cache.db, then stop it.
-    const initResult = await sub.exec(
+    const initResult = await (await getSub()).exec(
       [
         'sh', '-c',
-        `ntfy serve & I=0; while [ $I -lt 30 ] && [ ! -f ${dataDir}/auth.db ]; do sleep 0.2; I=$((I+1)); done; kill %1 2>/dev/null; wait; [ -f ${dataDir}/auth.db ]`,
+        `ntfy serve & PID=$!; I=0; while [ $I -lt 30 ] && [ ! -f ${dataDir}/auth.db ]; do sleep 0.2; I=$((I+1)); done; kill $PID 2>/dev/null; wait $PID 2>/dev/null; [ -f ${dataDir}/auth.db ]`,
       ],
       {
         env: {

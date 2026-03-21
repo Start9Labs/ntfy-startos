@@ -38,9 +38,6 @@ export const setAdminPassword = sdk.Action.withInput(
   async ({ effects, input }) => {
     const { password } = input
 
-    // Store password in store.json for retrieval via getAdminCredentials
-    await storeJson.merge(effects, { adminPassword: password })
-
     // Create subcontainer to run ntfy user management CLI
     // IMPORTANT: must mount volume at same path as main.ts (/data) and use same NTFY_AUTH_FILE
     const sub = await sdk.SubContainer.of(
@@ -102,6 +99,9 @@ export const setAdminPassword = sdk.Action.withInput(
         )
       }
     }
+
+    // Write to store only after ntfy CLI confirms success — keeps store and auth.db in sync
+    await storeJson.merge(effects, { adminPassword: password })
 
     return {
       version: '1' as const,

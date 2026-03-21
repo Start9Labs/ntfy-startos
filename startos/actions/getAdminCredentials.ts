@@ -1,5 +1,6 @@
 import { sdk } from '../sdk'
 import { storeJson } from '../fileModels/store.json'
+import { pickFallbackUrl } from '../utils'
 
 export const getAdminCredentials = sdk.Action.withoutInput(
   'get-admin-credentials',
@@ -15,9 +16,13 @@ export const getAdminCredentials = sdk.Action.withoutInput(
   }),
 
   async ({ effects }) => {
-    const store = await storeJson.read((s) => s).once()
+    const [store, fallbackUrl] = await Promise.all([
+      storeJson.read((s) => s).once(),
+      sdk.serviceInterface.getOwn(effects, 'ui', pickFallbackUrl).once(),
+    ])
+
     const password = store?.adminPassword
-    const baseUrl = store?.baseUrl ?? '(not configured — mDNS/LAN default)'
+    const baseUrl = store?.baseUrl ?? fallbackUrl ?? `(address not yet available)`
     const vapidPublicKey = store?.webPushPublicKey ?? '(not yet generated)'
 
     return {
@@ -48,7 +53,7 @@ export const getAdminCredentials = sdk.Action.withoutInput(
           {
             type: 'single' as const,
             name: 'Server URL',
-            description: 'Configure via "Configure Base URL" action',
+            description: 'Change via "Configure Base URL" action',
             value: baseUrl,
             masked: false,
             copyable: true,
