@@ -24,28 +24,21 @@ export const serverStats = sdk.Action.withoutInput(
     const authHeader = `Basic ${Buffer.from(`admin:${password}`).toString('base64')}`
     const baseUrl = `http://localhost:${uiPort}`
 
-    const [statsRes, infoRes] = await Promise.all([
-      fetch(`${baseUrl}/v1/stats`, { headers: { Authorization: authHeader } }),
-      fetch(`${baseUrl}/v1/info`, { headers: { Authorization: authHeader } }),
-    ])
+    const statsRes = await fetch(`${baseUrl}/v1/stats`, { headers: { Authorization: authHeader } })
 
     if (!statsRes.ok) {
       throw new Error(`Failed to fetch stats: HTTP ${statsRes.status}`)
     }
-    if (!infoRes.ok) {
-      throw new Error(`Failed to fetch info: HTTP ${infoRes.status}`)
-    }
 
     const stats = (await statsRes.json()) as Record<string, unknown>
-    const info = (await infoRes.json()) as Record<string, unknown>
 
-    const version = String(info?.version ?? 'unknown')
+    const version = stats?.version !== undefined ? String(stats.version) : null
     const messages = String(stats?.messages ?? 'unknown')
     const messagesRate = stats?.messages_rate !== undefined ? `${Number(stats.messages_rate).toFixed(2)}/s` : null
     const visitors = String(stats?.visitors ?? 'unknown')
 
     const lines: string[] = [
-      `Server version: ${version}`,
+      version ? `Server version: ${version}` : null,
       `Messages in cache: ${messages}`,
       messagesRate ? `Message rate: ${messagesRate}` : null,
       `Active visitors: ${visitors}`,
