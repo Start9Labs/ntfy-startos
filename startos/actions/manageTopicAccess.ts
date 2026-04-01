@@ -1,6 +1,6 @@
 import { sdk } from '../sdk'
 import { storeJson } from '../fileModels/store.json'
-import { uiPort } from '../utils'
+import { dataDir, uiPort } from '../utils'
 
 const { InputSpec, Value } = sdk
 
@@ -39,7 +39,7 @@ export const manageTopicAccess = sdk.Action.withInput(
     description:
       'Grant or revoke anonymous (unauthenticated) access to a topic. Use this to make topics publicly readable or writable without requiring a login.',
     warning: null,
-    allowedStatuses: 'only-running',
+    allowedStatuses: 'any',
     group: null,
     visibility: 'enabled',
   }),
@@ -51,32 +51,28 @@ export const manageTopicAccess = sdk.Action.withInput(
   async ({ effects, input }) => {
     const { topic, permission } = input
 
-    const password = await storeJson.read((s) => s.adminPassword).once()
-    if (!password) {
-      throw new Error('Admin password not set. Run "Set Admin Password" first.')
-    }
+    // Anonymous access management must use the CLI — the REST API only accepts
+    // registered user records and rejects "everyone" with 400 UserNotFound.
+    const sub = await sdk.SubContainer.of(
+      effects,
+      { imageId: 'main' },
+      sdk.Mounts.of().mountVolume({
+        volumeId: 'main',
+        subpath: null,
+        mountpoint: dataDir,
+        readonly: false,
+      }),
+      'ntfy-topic-access-sub',
+    )
 
-    const authHeader = `Basic ${Buffer.from(`admin:${password}`).toString('base64')}`
+    const result = await sub.exec([
+      'ntfy', 'access', '--auth-file', `${dataDir}/auth.db`, 'everyone', topic, permission,
+    ])
 
-    if (permission === 'deny') {
-      // DELETE /v1/users/access to remove the grant
-      const res = await fetch(`http://localhost:${uiPort}/v1/users/access`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', Authorization: authHeader },
-        body: JSON.stringify({ username: 'everyone', topic }),
-      })
-      if (!res.ok) {
-        throw new Error(`Failed to remove topic access: HTTP ${res.status}`)
-      }
-    } else {
-      const res = await fetch(`http://localhost:${uiPort}/v1/users/access`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: authHeader },
-        body: JSON.stringify({ username: 'everyone', topic, permission }),
-      })
-      if (!res.ok) {
-        throw new Error(`Failed to set topic access: HTTP ${res.status}`)
-      }
+    if (result.exitCode !== 0) {
+      throw new Error(
+        `Failed to set topic access: ${result.stderr || result.stdout || 'unknown error'}`,
+      )
     }
 
     const permissionLabel: Record<string, string> = {
