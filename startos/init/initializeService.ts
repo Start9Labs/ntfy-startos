@@ -29,11 +29,10 @@ export const initializeService = sdk.setupOnInit(async (effects) => {
   if (!existingPublicKey) {
     const result = await (await getSub()).exec(['ntfy', 'webpush', 'keys'])
 
-    // REVIEW: verify exact output format against ntfy v2.19.2
     const stdout = String(result.stdout || '')
 
-    const pubMatch = stdout.match(/NTFY_WEB_PUSH_PUBLIC_KEY=(\S+)/)
-    const privMatch = stdout.match(/NTFY_WEB_PUSH_PRIVATE_KEY=(\S+)/)
+    const pubMatch = stdout.match(/web-push-public-key:\s*(\S+)/)
+    const privMatch = stdout.match(/web-push-private-key:\s*(\S+)/)
 
     if (pubMatch && privMatch) {
       await storeJson.merge(effects, {
