@@ -21,23 +21,26 @@ const inputSpec = InputSpec.of({
     }
 
     const values: Record<string, string> = {}
-    const allUrls = addressInfo.nonLocal.format()
+    const hostnames = addressInfo.nonLocal.format('hostname-info')
 
-    for (const url of allUrls) {
-      try {
-        const hostname = new URL(url).hostname
-        let label: string
-        if (hostname.endsWith('.local')) {
-          label = `LAN/mDNS — ${hostname}`
-        } else if (hostname.endsWith('.onion')) {
-          label = `Tor — ${hostname}`
-        } else {
-          label = `Public domain — ${hostname}`
-        }
-        values[url] = label
-      } catch {
-        // skip malformed URLs
+    for (const h of hostnames) {
+      const url = addressInfo.nonLocal.toUrl(h)
+      const kind = h.metadata.kind
+      let label: string
+      if (kind === 'mdns') {
+        label = `LAN/mDNS — ${h.hostname}`
+      } else if (kind === 'ipv4' || kind === 'ipv6') {
+        label = `LAN (IP) — ${h.hostname}`
+      } else if (kind === 'private-domain') {
+        label = `Private domain — ${h.hostname}`
+      } else if (kind === 'public-domain') {
+        label = `Public domain — ${h.hostname}`
+      } else if (kind === 'plugin') {
+        label = `Plugin — ${h.hostname}`
+      } else {
+        label = h.hostname
       }
+      values[url] = label
     }
 
     if (Object.keys(values).length === 0) {
@@ -53,13 +56,9 @@ const inputSpec = InputSpec.of({
 
     // Default to LAN/mDNS if available, otherwise first available
     const defaultUrl =
-      allUrls.find((u) => {
-        try {
-          return new URL(u).hostname.endsWith('.local')
-        } catch {
-          return false
-        }
-      }) ?? Object.keys(values)[0]
+      hostnames.find((h) => h.metadata.kind === 'mdns') != null
+        ? addressInfo.nonLocal.toUrl(hostnames.find((h) => h.metadata.kind === 'mdns')!)
+        : Object.keys(values)[0]
 
     return {
       name: 'Base URL',
