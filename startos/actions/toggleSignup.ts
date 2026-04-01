@@ -7,7 +7,7 @@ const inputSpec = InputSpec.of({
   enabled: Value.toggle({
     name: 'Allow Self-Registration',
     description:
-      'When enabled, anyone who can reach this server can register an account. Registered users have no topic access until the admin grants it (auth policy is deny-all). When disabled, only the admin can create accounts.',
+      'When enabled, anyone who can reach this server can register an account. After registering, users have no topic access until the admin runs "Provision User Topics" to grant them their personal namespace (e.g. alice_alerts, alice_reminders). When disabled, only the admin can create accounts.',
     default: true,
   }),
 })
@@ -39,7 +39,7 @@ export const toggleSignup = sdk.Action.withInput(
       version: '1' as const,
       title: 'Registration Updated',
       message: input.enabled
-        ? 'Self-registration is now enabled. The service will restart to apply changes.'
+        ? 'Self-registration is now enabled. New users can register from the NTFY web UI. Run "Provision User Topics" after each registration to grant them access to their personal topic namespace.'
         : 'Self-registration is now disabled. Only the admin can create new accounts. The service will restart to apply changes.',
       result: null,
     }
