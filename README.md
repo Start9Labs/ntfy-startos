@@ -64,6 +64,8 @@ After installing:
 | **Configure Web Push**  | Set the contact email for VAPID web push notifications. |
 | **Set Log Level**       | Change server log verbosity (trace / debug / info / warn / error). |
 | **Server Stats**        | View message count, active visitors, active topics, and server version (service must be running). |
+| **Manage Topic Access** | Grant or revoke anonymous (unauthenticated) access to a topic. |
+| **Provision User Topics** | Grant a registered user ownership of their personal topic namespace (`username_*`). |
 
 ## Dependencies
 
@@ -93,12 +95,42 @@ The `main` volume is backed up. This includes:
 
 ## User Management
 
-1. **First run:** Use **Set Admin Password** to set the admin password. The admin username is `admin`.
-2. **Admin panel:** After logging in, the admin has full access to NTFY's built-in web UI admin panel for managing users and topic ACLs.
-3. **Adding users:** Self-registration is enabled by default — users visit the NTFY web UI and register. The admin can also create users directly from the admin panel.
-4. **Access control:** Default access is `deny-all`. Registered users have no topic access until the admin grants it from the admin panel. The `admin` user has the admin role and bypasses ACL entirely.
-5. **Access tokens:** Users create and manage their own tokens from the NTFY web UI profile page. Use tokens in apps and scripts instead of passwords.
-6. **Disabling self-registration:** Use **Toggle Signup** to prevent new user registration. When disabled, only the admin can create accounts.
+NTFY does not have a web-based admin panel for managing users or access control. All access management is done through StartOS actions, which run NTFY's CLI tools behind the scenes.
+
+### How topic access works
+
+NTFY's default access policy is **deny-all**: no topic is accessible to anyone until access is explicitly granted. This means:
+
+- Unauthenticated (anonymous) users can't access any topic by default
+- Registered users can log in but still can't access any topic until the admin provisions them
+- The `admin` user has the admin role and bypasses all access controls
+
+### Adding a new user
+
+1. Enable user registration if needed via **Toggle User Registration** (enabled by default)
+2. User visits the NTFY web UI and registers an account
+3. Admin runs **Provision User Topics** and enters the new user's username
+4. The user can now freely publish and subscribe to any topic prefixed with their username and an underscore — for example, if their username is `alice`, they can use `alice_alerts`, `alice_reminders`, `alice_status`, and so on — without any further admin involvement
+
+### Making a topic public (no login required)
+
+To allow anonymous access to a topic:
+
+1. Admin runs **Manage Topic Access**
+2. Enter the topic name and choose the access level:
+   - **Read & Write** — anyone can publish and subscribe
+   - **Read Only** — anyone can subscribe; login required to publish
+   - **Write Only** — anyone can publish; login required to subscribe
+   - **Deny** — removes previously granted anonymous access
+3. Wildcard patterns are supported (e.g. `announcements_*`)
+
+### Access tokens
+
+Users create and manage their own access tokens from the NTFY web UI profile page. Use tokens in scripts and apps instead of storing passwords.
+
+### Disabling self-registration
+
+Use **Toggle User Registration** to prevent new registrations. When disabled, only the admin can provision new users (account creation requires CLI access, which is not currently exposed as a StartOS action).
 
 ---
 
@@ -199,6 +231,8 @@ actions:
   - configure-web-push
   - set-log-level
   - server-stats
+  - manage-topic-access
+  - provision-user
 health_checks:
   - GET /v1/health (HTTP 200)
 backup_volumes:
