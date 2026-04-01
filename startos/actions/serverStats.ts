@@ -24,10 +24,11 @@ export const serverStats = sdk.Action.withoutInput(
     const authHeader = `Basic ${Buffer.from(`admin:${password}`).toString('base64')}`
     const baseUrl = `http://localhost:${uiPort}`
 
-    // Fetch stats and user list in parallel
-    const [statsRes, usersRes] = await Promise.all([
+    // Fetch stats, user list, and config in parallel
+    const [statsRes, usersRes, configRes] = await Promise.all([
       fetch(`${baseUrl}/v1/stats`, { headers: { Authorization: authHeader } }),
       fetch(`${baseUrl}/v1/users`, { headers: { Authorization: authHeader } }),
+      fetch(`${baseUrl}/v1/config`, { headers: { Authorization: authHeader } }),
     ])
 
     if (!statsRes.ok) {
@@ -47,6 +48,17 @@ export const serverStats = sdk.Action.withoutInput(
     if (usersRes.ok) {
       const users = (await usersRes.json()) as unknown[]
       userCount = String(Array.isArray(users) ? users.length : 'unknown')
+    }
+
+    // Live config
+    let configBaseUrl: string | null = null
+    let signupEnabled: boolean | null = null
+    let webPushEnabled: boolean | null = null
+    if (configRes.ok) {
+      const config = (await configRes.json()) as Record<string, unknown>
+      configBaseUrl = config?.base_url ? String(config.base_url) : null
+      signupEnabled = typeof config?.enable_signup === 'boolean' ? config.enable_signup : null
+      webPushEnabled = typeof config?.enable_web_push === 'boolean' ? config.enable_web_push : null
     }
 
     // Attachment storage via du on the attachments directory
@@ -74,12 +86,17 @@ export const serverStats = sdk.Action.withoutInput(
 
     const lines: string[] = [
       version ? `Server version: ${version}` : null,
+      configBaseUrl ? `Base URL: ${configBaseUrl}` : null,
+      '',
       `Messages in cache: ${messages}`,
       messagesRate ? `Message rate: ${messagesRate}` : null,
       `Active visitors: ${visitors}`,
       topics ? `Active topics: ${topics}` : null,
       userCount !== null ? `Registered users: ${userCount}` : null,
       attachmentSize !== null ? `Attachment storage used: ${attachmentSize}` : null,
+      '',
+      signupEnabled !== null ? `Self-registration: ${signupEnabled ? 'enabled' : 'disabled'}` : null,
+      webPushEnabled !== null ? `Web push (VAPID): ${webPushEnabled ? 'enabled' : 'disabled'}` : null,
     ].filter((l): l is string => l !== null)
 
     return {

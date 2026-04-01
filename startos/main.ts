@@ -33,6 +33,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
     NTFY_ATTACHMENT_EXPIRY_DURATION: `${store?.cacheDuration ?? 12}h`,
     NTFY_KEEPALIVE_INTERVAL: '45s',
     NTFY_LOG_LEVEL: store?.logLevel ?? 'info',
+    NTFY_ENABLE_METRICS: 'true',
   }
 
   // Web push (VAPID) — only set if keys are present.

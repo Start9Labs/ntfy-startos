@@ -9,6 +9,7 @@ import { setLogLevel } from './setLogLevel'
 import { serverStats } from './serverStats'
 import { manageTopicAccess } from './manageTopicAccess'
 import { provisionUser } from './provisionUser'
+import { serverMetrics } from './serverMetrics'
 
 export const actions = sdk.Actions.of()
   .addAction(setAdminPassword)
@@ -19,5 +20,6 @@ export const actions = sdk.Actions.of()
   .addAction(configureWebPush)
   .addAction(setLogLevel)
   .addAction(serverStats)
+  .addAction(serverMetrics)
   .addAction(manageTopicAccess)
   .addAction(provisionUser)

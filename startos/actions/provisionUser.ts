@@ -1,5 +1,6 @@
 import { sdk } from '../sdk'
-import { dataDir } from '../utils'
+import { storeJson } from '../fileModels/store.json'
+import { uiPort } from '../utils'
 
 const { InputSpec, Value } = sdk
 
@@ -31,7 +32,7 @@ export const provisionUser = sdk.Action.withInput(
     description:
       'Grant a registered user ownership of their personal topic namespace. After provisioning, the user can freely publish and subscribe to any topic prefixed with their username and an underscore (e.g. alice_alerts). Run once per user after they register.',
     warning: null,
-    allowedStatuses: 'any',
+    allowedStatuses: 'only-running',
     group: null,
     visibility: 'enabled',
   }),
@@ -43,41 +44,37 @@ export const provisionUser = sdk.Action.withInput(
   async ({ effects, input }) => {
     const { username } = input
 
-    const sub = await sdk.SubContainer.of(
-      effects,
-      { imageId: 'main' },
-      sdk.Mounts.of().mountVolume({
-        volumeId: 'main',
-        subpath: null,
-        mountpoint: dataDir,
-        readonly: false,
-      }),
-      'ntfy-provision-user-sub',
-    )
+    const password = await storeJson.read((s) => s.adminPassword).once()
+    if (!password) {
+      throw new Error('Admin password not set. Run "Set Admin Password" first.')
+    }
 
-    const authFile = `${dataDir}/auth.db`
-    const topicPattern = `${username}_*`
+    const authHeader = `Basic ${Buffer.from(`admin:${password}`).toString('base64')}`
+    const baseUrl = `http://localhost:${uiPort}`
 
-    // Verify the user exists before granting access
-    const listResult = await sub.exec([
-      'ntfy', 'user', 'list', '--auth-file', authFile,
-    ])
-    const userList = String(listResult.stdout || '')
-    if (!userList.includes(`username: ${username}`)) {
+    // Verify the user exists via GET /v1/users
+    const usersRes = await fetch(`${baseUrl}/v1/users`, {
+      headers: { Authorization: authHeader },
+    })
+    if (!usersRes.ok) {
+      throw new Error(`Failed to fetch user list: HTTP ${usersRes.status}`)
+    }
+    const users = (await usersRes.json()) as Array<{ username: string }>
+    const userExists = Array.isArray(users) && users.some((u) => u.username === username)
+    if (!userExists) {
       throw new Error(
         `User "${username}" does not exist. Ask them to register an account from the NTFY web UI first.`,
       )
     }
 
-    // Grant the user read-write access to their personal topic namespace
-    const accessResult = await sub.exec([
-      'ntfy', 'access', '--auth-file', authFile, username, topicPattern, 'read-write',
-    ])
-
-    if (accessResult.exitCode !== 0) {
-      throw new Error(
-        `Failed to provision user "${username}": ${accessResult.stderr || accessResult.stdout || 'unknown error'}`,
-      )
+    // Grant read-write access to their personal topic namespace via PUT /v1/users/access
+    const accessRes = await fetch(`${baseUrl}/v1/users/access`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: authHeader },
+      body: JSON.stringify({ username, topic: `${username}_*`, permission: 'read-write' }),
+    })
+    if (!accessRes.ok) {
+      throw new Error(`Failed to provision user "${username}": HTTP ${accessRes.status}`)
     }
 
     return {

@@ -1,6 +1,6 @@
 import { sdk } from '../sdk'
 import { storeJson } from '../fileModels/store.json'
-import { dataDir } from '../utils'
+import { dataDir, uiPort } from '../utils'
 
 const { InputSpec, Value } = sdk
 
@@ -96,22 +96,44 @@ export const setAdminPassword = sdk.Action.withInput(
       }
     }
 
-    // Try to create admin user; if it already exists, change the password instead
+    // Try to create admin user. If it already exists (non-zero exit), use the API
+    // for password change (works when service is running) or fall back to SubContainer CLI.
     const addResult = await sub.exec(
       ['ntfy', 'user', 'add', '--role=admin', 'admin'],
       { env },
     )
 
     if (addResult.exitCode !== 0) {
-      // User likely already exists — change password
-      const changeResult = await sub.exec(
-        ['ntfy', 'user', 'change-pass', 'admin'],
-        { env },
-      )
-      if (changeResult.exitCode !== 0) {
-        throw new Error(
-          `Failed to set admin password: ${changeResult.stderr || changeResult.stdout || 'unknown error'}`,
+      // Admin user already exists — try API first (faster, no SubContainer needed)
+      const existingPassword = await storeJson.read((s) => s.adminPassword).once()
+      let apiSucceeded = false
+
+      if (existingPassword) {
+        try {
+          const res = await fetch(`http://localhost:${uiPort}/v1/account/password`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Basic ${Buffer.from(`admin:${existingPassword}`).toString('base64')}`,
+            },
+            body: JSON.stringify({ password: existingPassword, new_password: password }),
+          })
+          apiSucceeded = res.ok
+        } catch {
+          // Service not running — fall through to SubContainer
+        }
+      }
+
+      if (!apiSucceeded) {
+        const changeResult = await sub.exec(
+          ['ntfy', 'user', 'change-pass', 'admin'],
+          { env },
         )
+        if (changeResult.exitCode !== 0) {
+          throw new Error(
+            `Failed to set admin password: ${changeResult.stderr || changeResult.stdout || 'unknown error'}`,
+          )
+        }
       }
     }
 
