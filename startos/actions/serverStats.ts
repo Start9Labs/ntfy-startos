@@ -1,6 +1,6 @@
 import { sdk } from '../sdk'
 import { storeJson } from '../fileModels/store.json'
-import { uiPort } from '../utils'
+import { uiPort, dataDir } from '../utils'
 
 export const serverStats = sdk.Action.withoutInput(
   'server-stats',
@@ -8,7 +8,7 @@ export const serverStats = sdk.Action.withoutInput(
   async ({ effects }) => ({
     name: 'Server Stats',
     description:
-      'View NTFY server statistics: message counts, active visitors, topics, and server version.',
+      'View NTFY server statistics: message counts, active visitors, topics, registered users, attachment storage usage, and server version.',
     warning: null,
     allowedStatuses: 'only-running',
     group: null,
@@ -24,7 +24,11 @@ export const serverStats = sdk.Action.withoutInput(
     const authHeader = `Basic ${Buffer.from(`admin:${password}`).toString('base64')}`
     const baseUrl = `http://localhost:${uiPort}`
 
-    const statsRes = await fetch(`${baseUrl}/v1/stats`, { headers: { Authorization: authHeader } })
+    // Fetch stats and user list in parallel
+    const [statsRes, usersRes] = await Promise.all([
+      fetch(`${baseUrl}/v1/stats`, { headers: { Authorization: authHeader } }),
+      fetch(`${baseUrl}/v1/users`, { headers: { Authorization: authHeader } }),
+    ])
 
     if (!statsRes.ok) {
       throw new Error(`Failed to fetch stats: HTTP ${statsRes.status}`)
@@ -38,12 +42,44 @@ export const serverStats = sdk.Action.withoutInput(
     const visitors = String(stats?.visitors ?? 'unknown')
     const topics = stats?.topics !== undefined ? String(stats.topics) : null
 
+    // User count from /v1/users (admin only)
+    let userCount: string | null = null
+    if (usersRes.ok) {
+      const users = (await usersRes.json()) as unknown[]
+      userCount = String(Array.isArray(users) ? users.length : 'unknown')
+    }
+
+    // Attachment storage via du on the attachments directory
+    let attachmentSize: string | null = null
+    try {
+      const sub = await sdk.SubContainer.of(
+        effects,
+        { imageId: 'main' },
+        sdk.Mounts.of().mountVolume({
+          volumeId: 'main',
+          subpath: null,
+          mountpoint: dataDir,
+          readonly: true,
+        }),
+        'ntfy-stats-du-sub',
+      )
+      const duResult = await sub.exec([
+        'sh', '-c', `du -sh ${dataDir}/attachments 2>/dev/null | cut -f1`,
+      ])
+      const duOutput = String(duResult.stdout || '').trim()
+      if (duOutput) attachmentSize = duOutput
+    } catch {
+      // non-fatal — attachments dir may not exist yet
+    }
+
     const lines: string[] = [
       version ? `Server version: ${version}` : null,
       `Messages in cache: ${messages}`,
       messagesRate ? `Message rate: ${messagesRate}` : null,
       `Active visitors: ${visitors}`,
       topics ? `Active topics: ${topics}` : null,
+      userCount !== null ? `Registered users: ${userCount}` : null,
+      attachmentSize !== null ? `Attachment storage used: ${attachmentSize}` : null,
     ].filter((l): l is string => l !== null)
 
     return {
