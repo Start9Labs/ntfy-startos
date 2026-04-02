@@ -14,7 +14,7 @@ Use this checklist when validating a build before release. Mark each item ✅ pa
 |---|------|----------|--------|-------|
 | 1.1 | `npm run check` passes with no TypeScript errors | Exit 0, no output | | |
 | 1.2 | `make x86` produces `ntfy_x86_64.s9pk` | Build complete, SDK version shown | | |
-| 1.3 | `make arm` produces `ntfy_aarch64.s9pk` | Build complete | | |
+| 1.3 | `make aarch64` produces `ntfy_aarch64.s9pk` | Build complete | | |
 | 1.4 | `start-cli s9pk inspect ntfy_x86_64.s9pk manifest` shows correct metadata | id=ntfy, version=2.0.0:2-beta.1, arch=x86_64 | | |
 
 ---
@@ -146,9 +146,23 @@ Use this checklist when validating a build before release. Mark each item ✅ pa
 
 | # | Test | Expected | Result | Notes |
 |---|------|----------|--------|-------|
-| 12.1 | Run action while service is running | Result shows: Messages in cache, Active visitors, Active topics, Server version | | |
+| 12.1 | Run action while service is running | Result shows: Server version, Base URL, Messages in cache, Active visitors, Active topics, Registered users, Attachment storage used, Self-registration status, Web push status | | |
 | 12.2 | Run action while service is stopped | Error: "Action only available when service is running" | | |
 | 12.3 | Publish several messages then re-run action | Message count has increased | | |
+| 12.4 | Registered users count matches number of accounts created | User count is accurate | | |
+| 12.5 | Upload an attachment then re-run action | Attachment storage used shows non-zero value | | |
+
+---
+
+## 12b. Server Metrics Action
+
+| # | Test | Expected | Result | Notes |
+|---|------|----------|--------|-------|
+| 12b.1 | Run action while service is running | Result shows sections: Messages, Active Connections, Attachments, Delivery | | |
+| 12b.2 | Run action while service is stopped | Error: "Action only available when service is running" | | |
+| 12b.3 | Publish messages then re-run | `Published (success)` counter has increased | | |
+| 12b.4 | Upload an attachment then re-run | `Storage used` shows non-zero value | | |
+| 12b.5 | Visitor/subscriber/topic counts are non-zero while connected | Gauges reflect live state | | |
 
 ---
 
@@ -170,10 +184,11 @@ Use this checklist when validating a build before release. Mark each item ✅ pa
 |---|------|----------|--------|-------|
 | 14.1 | Register a second user account (`alice`) via web UI (signup must be enabled) | Registration succeeds | | |
 | 14.2 | Log in as `alice` — verify no topic access | Topics are inaccessible by default | | |
-| 14.3 | Log in as `admin` — grant `alice` read-write access to topic `alerts` via NTFY admin panel | ACL saved | | |
-| 14.4 | Log in as `alice` — publish and subscribe to `alerts` | Publish/subscribe succeed | | |
-| 14.5 | `alice` attempts to access topic `private` (no ACL granted) | Rejected | | |
-| 14.6 | Create an access token for `alice` from the web UI profile page | Token created; use token in curl instead of password | | |
+| 14.3 | Admin runs **Provision User Topics** action with username `alice` | Action succeeds; `alice` granted access to `alice_*` namespace | | |
+| 14.4 | Log in as `alice` — publish and subscribe to `alice_alerts` | Publish/subscribe succeed | | |
+| 14.5 | `alice` attempts to access topic `other_private` (no ACL granted) | Rejected | | |
+| 14.6 | Admin runs **Manage Topic Access** — set `alice_alerts` to read-only for everyone | Anonymous subscribe succeeds; anonymous publish rejected | | |
+| 14.7 | Create an access token for `alice` from the web UI profile page | Token created; use token in curl instead of password | | |
 
 ---
 
@@ -209,7 +224,7 @@ These items could not be fully validated from code inspection alone. Verify duri
 
 | # | Item | How to verify | Verified? |
 |---|------|---------------|-----------|
-| V1 | `ntfy webpush keys` exact output format — regex parses public/private key correctly | Check startup logs; VAPID key in "Get Admin Credentials" should be non-empty | |
+| V1 | `ntfy webpush keys` exact output format — regex parses public/private key correctly | Check startup logs; VAPID key in "Get Admin Credentials" should be non-empty | ✅ Fixed — output uses `web-push-public-key: <key>` format |
 | V2 | `ntfy user add` exit code on first run vs already-exists — change-pass fallback triggers correctly | Run "Set Admin Password" twice; both succeed | |
 | V3 | `/v1/stats` response fields in v2.19.2 — `messages`, `visitors`, `topics`, `version` all present | "Server Stats" output matches expected fields | |
 | V4 | SSE proxy timeout vs 45s keepalive — long-lived subscriptions not dropped by StartOS proxy | Subscribe to a topic, leave connection open > 2 minutes, confirm no disconnect | |
@@ -221,7 +236,7 @@ These items could not be fully validated from code inspection alone. Verify duri
 
 A build is considered **release-ready** when:
 
-- All §1–§12 items are ✅ pass
+- All §1–§12b items are ✅ pass
 - All §15 (Backup & Restore) items are ✅ pass
 - §13 (Web Push) is at minimum ✅ 13.1–13.4
 - All §17 known items are verified and resolved

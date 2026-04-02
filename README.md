@@ -63,7 +63,8 @@ After installing:
 | **Configure Storage**   | Set attachment size limits, total storage cap, per-user quota, and cache retention. |
 | **Configure Web Push**  | Set the contact email for VAPID web push notifications. |
 | **Set Log Level**       | Change server log verbosity (trace / debug / info / warn / error). |
-| **Server Stats**        | View message count, active visitors, active topics, and server version (service must be running). |
+| **Server Stats**        | View message count, active visitors, active topics, registered users, attachment storage, config summary, and server version (service must be running). |
+| **Server Metrics**      | View detailed Prometheus metrics: message throughput, subscriber counts, attachment bytes, UnifiedPush and web push delivery stats (service must be running). |
 | **Manage Topic Access** | Grant or revoke anonymous (unauthenticated) access to a topic. |
 | **Provision User Topics** | Grant a registered user ownership of their personal topic namespace (`username_*`). |
 
@@ -231,6 +232,7 @@ actions:
   - configure-web-push
   - set-log-level
   - server-stats
+  - server-metrics
   - manage-topic-access
   - provision-user
 health_checks:
