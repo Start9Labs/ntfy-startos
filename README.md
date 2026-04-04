@@ -7,7 +7,7 @@
 > **Upstream repo:** <https://github.com/binwiederhier/ntfy>
 > **Upstream docs:** <https://docs.ntfy.sh>
 
-NTFY is a simple, privacy-first pub/sub push notification service. Send notifications to your phone or desktop from any script, server, or service — no account needed. Self-hosted on your StartOS server, your notifications stay on your infrastructure.
+NTFY is a simple, privacy-first pub/sub push notification service. Send notifications to your phone or desktop from any script, server, or service. Self-hosted on your StartOS server, your notifications stay on your infrastructure - by default, login is required for all access.
 
 ---
 
@@ -18,7 +18,7 @@ After installing:
 1. Open **Actions** and run **Set Admin Password** — the service will not start until this is done.
 2. Once the service is running, open the NTFY web UI at your server's address and log in as `admin`.
 3. Subscribe to a topic from the web UI (e.g. `alerts`).
-4. Send your first notification:
+4. Send your first notification (update commands below using your actual server name and admin password):
    ```bash
    curl -d "Hello from my server" http://ntfy.local/alerts -u admin:yourpassword
    ```
@@ -27,8 +27,8 @@ After installing:
    curl -H "Title: Disk almost full" -H "Priority: high" -H "Tags: warning" \
      -d "Disk usage at 90%" http://ntfy.local/alerts -u admin:yourpassword
    ```
-6. Connect the NTFY mobile app: set the server URL → log in → subscribe to `alerts`.
-7. Generate an access token from the web UI profile page for use in scripts (avoids storing your password in scripts).
+6. Read the User Management section below to learn how you can let users register, publish and subscribe to notifications.
+7. Read the Mobile Apps and Clients section below to learn how to configure Android and iOS clients to reliably receive messages.
 
 ---
 
@@ -96,7 +96,7 @@ The `main` volume is backed up. This includes:
 
 ## User Management
 
-NTFY does not have a web-based admin panel for managing users or access control. All access management is done through StartOS actions, which run NTFY's CLI tools behind the scenes.
+NTFY has a built-in web admin panel accessible after logging in as `admin`. StartOS actions complement it — they handle operations the REST API does not support (such as granting anonymous topic access) and provide a convenient interface for common configuration tasks.
 
 ### How topic access works
 
@@ -131,7 +131,7 @@ Users create and manage their own access tokens from the NTFY web UI profile pag
 
 ### Disabling self-registration
 
-Use **Toggle User Registration** to prevent new registrations. When disabled, only the admin can provision new users (account creation requires CLI access, which is not currently exposed as a StartOS action).
+Use **Toggle User Registration** to prevent new registrations. When disabled new accounts cannot be created until registration is re-enabled. No "Create User" action exists in StartOS.
 
 ---
 
@@ -160,15 +160,18 @@ For remote or Tor access, change the base URL to your StartTunnel domain or Tor 
 
 ## Mobile Apps and Clients
 
-**Official NTFY apps:** The official [Android](https://play.google.com/store/apps/details?id=io.heckel.ntfy) and [iOS](https://apps.apple.com/app/ntfy/id1625396347) apps work with self-hosted servers. In the app settings, set the server URL to your NTFY address and use your username/password or an access token.
-
-**UnifiedPush:** NTFY works as a [UnifiedPush](https://unifiedpush.org/) distributor for Android. Privacy-focused apps (Mastodon, Element, etc.) can use your self-hosted NTFY instead of Google FCM for push delivery. No extra configuration needed — NTFY detects UnifiedPush clients automatically. The server URL must be reachable from the device (Tor or StartTunnel recommended for use outside the home network).
+**Official NTFY apps:** The official [Android](https://play.google.com/store/apps/details?id=io.heckel.ntfy) app ([F-Droid build](https://f-droid.org/en/packages/io.heckel.ntfy/) also available) and [iOS](https://apps.apple.com/app/ntfy/id1625396347) app work with self-hosted servers. In the app settings, set the server URL to your NTFY address and use your username/password or an access token. Note: reliable background delivery requires additional setup on both platforms — see **Push Notification Limitations** below.
 
 **CLI:** The `ntfy` CLI can publish and subscribe. Example:
 ```bash
-ntfy publish --token <token> http://ntfy.local/mytopic "Hello"
-ntfy subscribe http://ntfy.local/mytopic -u admin:<pass>
+ntfy publish -u admin:<pass> http://ntfy.local/mytopic "Hello"
 ```
+```bash
+ntfy subscribe -u admin:<pass> http://ntfy.local/mytopic
+```
+You can also use an access token (generated from the web UI profile page) instead of a password: `--token <token>`.
+
+**UnifiedPush:** NTFY works as a [UnifiedPush](https://unifiedpush.org/) distributor for Android. Other privacy-focused apps on your device (Mastodon, Element, etc.) can use your self-hosted NTFY as their push relay instead of Google FCM — no extra configuration needed. Note: this is separate from NTFY's own notification delivery, which uses long-polling regardless. The server URL must be reachable from the device (Tor or StartTunnel recommended for use outside the home network).
 
 **Web push (browser):** VAPID keys are generated automatically on install. Browser push notifications work in the NTFY web UI — subscribe to a topic and notifications arrive even when the tab is closed, as long as the browser is running.
 
@@ -178,11 +181,23 @@ ntfy subscribe http://ntfy.local/mytopic -u admin:<pass>
 
 ## Push Notification Limitations
 
-**No Firebase (FCM) / APNs push:** This self-hosted package does not use Google Firebase or Apple APNs. The official NTFY Android and iOS apps will **not** receive background push notifications via Google/Apple infrastructure. Instead, apps maintain a persistent connection to your server (long-polling). This works reliably on Android when the NTFY app is given battery exemption. On iOS, background delivery may be unreliable without APNs.
+**No Firebase (FCM) / APNs push:** This self-hosted package does not use Google Firebase or Apple APNs. The official NTFY Android and iOS apps will **not** receive background push notifications via Google/Apple infrastructure. Instead, apps maintain a persistent connection to your server (long-polling).
 
-**Web push works fully:** Browser notifications via Web Push (VAPID) are fully supported and do not require Firebase or Apple services.
+**Android — recommended setup:**
+1. Install the [NTFY Android app](https://play.google.com/store/apps/details?id=io.heckel.ntfy) (or the [F-Droid build](https://f-droid.org/en/packages/io.heckel.ntfy/) for a Google-free version).
+2. Set the server URL to your NTFY address and log in.
+3. **Disable battery optimization for the NTFY app** — this is critical. Without it, Android will kill the background connection and you will miss notifications. Go to Settings → Apps → NTFY → Battery → Unrestricted (wording varies by device/Android version). With battery exemption granted, real-time delivery is reliable.
 
-**Recommendation for Android:** Use [UnifiedPush](https://unifiedpush.org/) with apps that support it (Element, Mastodon clients, etc.) for reliable background delivery without Google services.
+**iOS — recommended setup:**
+iOS restricts background apps more aggressively than Android. The native NTFY app cannot reliably deliver notifications when the app is backgrounded or the screen is locked. The recommended approach for iOS is to use the **NTFY web app via Safari**:
+1. Open your NTFY server URL in Safari on your iOS device (iOS 16.4 or later required).
+2. Tap the Share button → **Add to Home Screen**.
+3. Open the app from your home screen and subscribe to your topics.
+4. Enable browser notifications when prompted.
+
+This uses Apple's Web Push infrastructure (VAPID), which delivers notifications reliably even when Safari is closed — no ntfy.sh relay or Apple Developer account needed. Your self-hosted NTFY server already has VAPID keys configured automatically.
+
+**Web push works fully:** Browser notifications via Web Push (VAPID) are fully supported on desktop browsers and iOS Safari (16.4+) and do not require Firebase or Apple services.
 
 ---
 
@@ -201,6 +216,7 @@ ntfy subscribe http://ntfy.local/mytopic -u admin:<pass>
 
 ## v2 Roadmap (Not in This Release)
 
+- **Create User action:** Allow the admin to create new user accounts directly from StartOS without enabling self-registration.
 - **SMTP email gateway:** Forward notifications to email via the StartOS system SMTP gateway.
 - **Telegram integration:** Forward notifications to Telegram via a bot.
 
