@@ -6,221 +6,233 @@
 
 > **Upstream repo:** <https://github.com/binwiederhier/ntfy>
 > **Upstream docs:** <https://docs.ntfy.sh>
+>
+> Everything not listed in this document should behave the same as upstream
+> ntfy **v2.21.0**. If a feature, setting, or behavior is not mentioned here,
+> the upstream documentation is accurate and fully applicable.
 
-NTFY is a simple, privacy-first pub/sub push notification service. Send notifications to your phone or desktop from any script, server, or service. Self-hosted on your StartOS server, your notifications stay on your infrastructure - by default, login is required for all access.
-
----
-
-## Quick Start
-
-After installing:
-
-1. Open **Actions** and run **Set Admin Password** — the service will not start until this is done.
-2. Once the service is running, open the NTFY web UI at your server's address and log in as `admin`.
-3. Subscribe to a topic from the web UI (e.g. `alerts`).
-4. Send your first notification (update commands below using your actual server name and admin password):
-   ```bash
-   curl -d "Hello from my server" http://ntfy.local/alerts -u admin:yourpassword
-   ```
-5. Try priorities, titles, and tags:
-   ```bash
-   curl -H "Title: Disk almost full" -H "Priority: high" -H "Tags: warning" \
-     -d "Disk usage at 90%" http://ntfy.local/alerts -u admin:yourpassword
-   ```
-6. Read the User Management section below to learn how you can let users register, publish and subscribe to notifications.
-7. Read the Mobile Apps and Clients section below to learn how to configure Android and iOS clients to reliably receive messages.
+NTFY is a simple, privacy-first HTTP-based pub/sub notification service. Publishers `POST` to a topic URL; subscribers get an instant push. Self-hosted on StartOS, all traffic stays on your infrastructure. The package ships with authentication required by default and a deny-all topic ACL — you explicitly grant access to make anything reachable.
 
 ---
 
-## Container Runtime
+## Table of Contents
 
-| Property      | Value                           |
-| ------------- | ------------------------------- |
-| Image         | `binwiederhier/ntfy:v2.19.2`    |
-| Architectures | x86_64, aarch64                 |
-| Entrypoint    | `ntfy serve`                    |
+- [Image and Container Runtime](#image-and-container-runtime)
+- [Volume and Data Layout](#volume-and-data-layout)
+- [Installation and First-Run Flow](#installation-and-first-run-flow)
+- [Configuration Management](#configuration-management)
+- [Network Access and Interfaces](#network-access-and-interfaces)
+- [Actions](#actions)
+- [Base URL](#base-url)
+- [Mobile Apps and Clients](#mobile-apps-and-clients)
+- [Push Notification Limitations](#push-notification-limitations)
+- [Attachment Storage](#attachment-storage)
+- [Backups and Restore](#backups-and-restore)
+- [Health Checks](#health-checks)
+- [Dependencies](#dependencies)
+- [Limitations and Differences](#limitations-and-differences)
+- [What Is Unchanged from Upstream](#what-is-unchanged-from-upstream)
+- [v2 Roadmap](#v2-roadmap)
+- [Contributing](#contributing)
+- [Quick Reference for AI Consumers](#quick-reference-for-ai-consumers)
 
-## Volumes
+---
 
-| Volume | Mount Point | Purpose         |
-| ------ | ----------- | --------------- |
-| `main` | `/data`     | Persistent data (user database, message cache, attachments, config) |
+## Image and Container Runtime
 
-## Network Interfaces
+| Property      | Value                                                     |
+| ------------- | --------------------------------------------------------- |
+| Image         | `binwiederhier/ntfy:v2.21.0` (upstream, unmodified)       |
+| Architectures | x86_64, aarch64                                           |
+| Entrypoint    | `ntfy serve --config /data/settings.yaml` (package-owned) |
 
-| Interface | Port | Protocol | Purpose              |
-| --------- | ---- | -------- | -------------------- |
-| Web UI    | 80   | HTTP     | NTFY web UI and API  |
+## Volume and Data Layout
+
+| Volume    | Mount (inside container) | Contents                                                                                                     |
+| --------- | ------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `main`    | `/data`                  | `auth.db` (users + ACLs + tokens), `cache.db` (message cache), `webpush.db`, `attachments/`, `settings.yaml` |
+| `startos` | (not mounted in daemon)  | `store.json` — holds the admin management token minted on install                                            |
+
+The `settings.yaml` config file is owned and enforced by StartOS. Hand-editing it is pointless — fields are re-asserted to their enforced values on service restart.
+
+## Installation and First-Run Flow
+
+1. Install the service. StartOS seeds `settings.yaml` with VAPID keys and a `base-url` derived from the mDNS LAN address, and creates a critical task to set the admin password.
+2. Run the **Set Admin Password** critical task. An admin user is created, a never-expiring management token is minted and stored in `store.json`, and the password is shown once — copy it before closing the dialog.
+3. The service starts automatically.
+4. Open the web UI at your server's address and log in as `admin`.
+
+The management token in `store.json` lets the package's own actions (Grant User Topic Access, Provision Publisher, etc.) authenticate against ntfy's admin API without keeping the admin password around. It persists across password rotations.
+
+## Configuration Management
+
+| StartOS-managed (enforced in `settings.yaml`)                                                                                                                                               | Upstream-managed (via Configure action or ntfy web UI)                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `listen-http: :80`, `auth-file`, `cache-file`, `attachment-cache-dir`, `web-push-file`, `auth-default-access: deny-all`, `behind-proxy: true`, `enable-login: true`, `enable-metrics: true` | `base-url`, `enable-signup`, `attachment-file-size-limit`, `attachment-total-size-limit`, `visitor-attachment-total-size-limit`, `cache-duration`, `web-push-email-address`, `log-level` |
+| VAPID keys (generated on install)                                                                                                                                                           | Per-user profile settings, tokens, subscriptions — managed in the ntfy web UI by the logged-in user                                                                                      |
+
+Run **Configure** to change anything in the right column. The service restarts to apply changes.
+
+## Network Access and Interfaces
+
+| Interface | Port | Protocol | Purpose             | Access                       |
+| --------- | ---- | -------- | ------------------- | ---------------------------- |
+| Web UI    | 80   | HTTP     | NTFY web UI and API | LAN (mDNS), Tor, StartTunnel |
+
+StartOS terminates TLS externally; the container itself serves plain HTTP on port 80. Other StartOS packages on the same box can reach ntfy at `http://ntfy.startos` on the internal VLAN.
 
 ## Actions
 
-| Action                  | Description |
-| ----------------------- | ----------- |
-| **Set Admin Password**  | Set or change the admin account password. Required before the service will start. |
-| **Get Admin Credentials** | Show the admin username, password, current server URL, and VAPID public key. |
-| **Toggle User Registration** | Enable or disable new user self-registration. |
-| **Configure Base URL**  | Choose which address is embedded in attachment links and web push notifications. |
-| **Configure Storage**   | Set attachment size limits, total storage cap, per-user quota, and cache retention. |
-| **Configure Web Push**  | Set the contact email for VAPID web push notifications. |
-| **Set Log Level**       | Change server log verbosity (trace / debug / info / warn / error). |
-| **Server Stats**        | View message count, active visitors, active topics, registered users, attachment storage, config summary, and server version (service must be running). |
-| **Server Metrics**      | View detailed Prometheus metrics: message throughput, subscriber counts, attachment bytes, UnifiedPush and web push delivery stats (service must be running). |
-| **Manage Topic Access** | Grant or revoke anonymous (unauthenticated) access to a topic. |
-| **Provision User Topics** | Grant a registered user ownership of their personal topic namespace (`username_*`). |
+Actions are grouped in the StartOS UI by intent. "Availability" is the action's `allowedStatuses`. Setter actions return the relevant current state in their result, so there are no separate "view" actions — use the ntfy web UI (Account → Users & Access, admin-only) to browse state before acting.
+
+### General
+
+| Action                 | Purpose                                                                                             | Availability | Notes                                                          |
+| ---------------------- | --------------------------------------------------------------------------------------------------- | ------------ | -------------------------------------------------------------- |
+| **Set Admin Password** | One-shot: create the admin user and mint the management token. Fired as a critical task on install. | Any          | Hidden. Use **Reset User Password** → `admin` to rotate later. |
+| **Configure**          | Set base URL, self-registration, attachment limits, cache retention, VAPID email, log level.        | Any          | Leave a field blank to use ntfy's upstream default.            |
+
+### Users
+
+Manage human accounts and their per-user topic access.
+
+| Action                      | Purpose                                                                                                                                                                | Availability | Inputs                                                                   |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------ |
+| **Create User**             | Create a regular user. Returns an auto-generated password shown once.                                                                                                  | Only running | Username                                                                 |
+| **Reset User Password**     | Rotate any user's password (including admin). Tokens survive.                                                                                                          | Only running | User (dynamicSelect, excludes anonymous and `pkg_*`)                     |
+| **Delete User**             | Delete a regular user. Admins cannot be deleted.                                                                                                                       | Only running | User (dynamicSelect, excludes admins and `pkg_*`)                        |
+| **Grant User Topic Access** | Grant or deny `read-write` / `read-only` / `write-only` / `deny` on a topic or pattern for a specific user. Replaces prior grant. Result lists the user's full grants. | Only running | User, topic (existing / new / personal-namespace `<user>_*`), permission |
+
+### Publishers
+
+"Publisher" in this package is specific: a scoped, write-only automation account (username `pkg_<id>`), minted for a service or script that only needs to publish to a single topic. It is **not** a separate ntfy role — any regular user with write access can publish too. Publishers exist so you can hand credentials to automation (StartOS packages, cron jobs, external tools) without granting broader account access.
+
+| Action                  | Purpose                                                                                                                                               | Availability | Inputs / Outputs                                                               |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------ |
+| **Provision Publisher** | Mint a scoped, write-only automation account for a service or external tool that publishes to NTFY. Returns credentials to hand to the caller.        | Only running | Publisher ID, topic. Returns `{publishUrl, token, topic, username: pkg_<id>}`. |
+| **Revoke Publisher**    | Delete a provisioned automation account; its topic grants and tokens cascade. Does not affect regular users' ability to publish via their own grants. | Only running | Publisher (dynamicSelect of `pkg_*` users)                                     |
+
+### Public Access
+
+Grant or deny unauthenticated ("everyone") access to topics. Separate from per-user access because public access is topic-scoped, not user-scoped.
+
+| Action                         | Purpose                                                                                                                                                      | Availability | Inputs                             |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ | ---------------------------------- |
+| **Set Anonymous Topic Access** | Grant or deny `read-write` / `read-only` / `write-only` / `deny` on a topic for anonymous clients. Result lists every topic currently with anonymous access. | Only running | Topic (existing / new), permission |
+
+### Monitoring
+
+| Action             | Purpose                                                                                                             | Availability |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------ |
+| **Server Stats**   | Active version, base URL, message counts, account counts (users and publishers), attachment storage, feature flags. | Only running |
+| **Server Metrics** | Detailed Prometheus metrics: throughput, subscribers, attachment bytes, UnifiedPush / web push delivery counts.     | Only running |
+
+## Base URL
+
+`base-url` is embedded by ntfy into attachment download links (the URLs a subscriber taps to download a file) and into web-push notification click targets (the URL the browser opens when a push is tapped). It does **not** affect subscription binding — browser web-push subscriptions are tied to the origin where the user opens the web UI, not to `base-url`.
+
+Default seeded on install: the server's mDNS URL (`https://<server>.local:<port>`). Works on your home LAN; not reachable remotely.
+
+Change it via **Configure** to an externally reachable URL if you need:
+
+- Tap-to-download for attachments when you're off-LAN
+- Web-push notifications whose click target opens outside the home network
+
+Access methods:
+
+| Access from…          | With `base-url` = LAN mDNS | With `base-url` = StartTunnel / Tor |
+| --------------------- | -------------------------- | ----------------------------------- |
+| Home LAN              | Works                      | Works                               |
+| Outside (StartTunnel) | Attachment links broken    | Works                               |
+| Tor                   | Attachment links broken    | Works                               |
+
+Only one `base-url` at a time. Pick the widest-reachable URL your users actually use.
+
+## Mobile Apps and Clients
+
+**Official NTFY apps.** The [Android](https://play.google.com/store/apps/details?id=io.heckel.ntfy) app ([F-Droid build](https://f-droid.org/en/packages/io.heckel.ntfy/) available) and [iOS](https://apps.apple.com/app/ntfy/id1625396347) app both work with self-hosted servers — set the server URL to your externally reachable address and log in with username/password or an access token.
+
+**CLI.** The `ntfy` CLI can publish and subscribe:
+
+```bash
+ntfy publish -u admin:<pass> https://ntfy.myserver.tld/mytopic "Hello"
+ntfy subscribe --token <tk_...> https://ntfy.myserver.tld/mytopic
+```
+
+**UnifiedPush.** This server works as a [UnifiedPush](https://unifiedpush.org/) distributor for Android — other apps on your phone (Element, Mastodon, Tusky, FairEmail, etc.) can route their push through your ntfy instead of Google FCM. No extra server-side setup.
+
+**Web push in the browser.** VAPID keys are generated automatically on install. Subscribe to a topic in the web UI and browser notifications arrive even when the tab is closed.
+
+**Message replay on reconnect.** When a subscriber goes offline and reconnects, ntfy automatically re-delivers messages from the cache. Window = `cache-duration` (default 12 hours, tunable via Configure).
+
+## Push Notification Limitations
+
+This package does **not** relay through Google Firebase (FCM) or Apple APNs. The official NTFY Android and iOS apps work, but they maintain a persistent long-polling connection to your server — they do not receive push via Google/Apple infrastructure.
+
+**Android.** Works well if you disable battery optimization for the NTFY app (Settings → Apps → NTFY → Battery → Unrestricted). Without it, Android kills the background connection and you miss notifications.
+
+**iOS.** Apple's background-app restrictions make the native NTFY app unreliable. The recommended iOS path is the ntfy **web app via Safari**:
+
+1. Open your ntfy URL in Safari on iOS 16.4 or later.
+2. Share → Add to Home Screen.
+3. Open from the home screen and subscribe.
+4. Allow notifications.
+
+This uses Apple's Web Push (VAPID) infrastructure, which delivers reliably even when Safari is closed. No ntfy.sh relay or Apple Developer account needed.
+
+## Attachment Storage
+
+- Stored under `/data/attachments` on the `main` volume.
+- Expire automatically when their message expires (tied to `cache-duration`).
+- When the total limit is full, new uploads are rejected with an immediate error. Text/link/action notifications are unaffected.
+- ntfy does not proactively alert on approaching limits — check **Server Stats** and adjust via **Configure**.
+
+Defaults (upstream): per-file 15 MB, total 5000 MB, per-visitor 100 MB.
+
+## Backups and Restore
+
+Both `main` and `startos` volumes are backed up:
+
+- `auth.db`, `cache.db`, `webpush.db`, `attachments/`, `settings.yaml` (on `main`)
+- `store.json` (on `startos`) — the admin management token
+
+**On restore**, users, passwords, topic ACLs, attachments, and web-push subscriptions are all restored. VAPID keys are preserved, so existing browser subscriptions continue to work.
+
+**Backup size** is bounded by `cache-duration × upload rate`, not by total historical uploads — attachments age out of the cache regardless of backup history. Lower the attachment limits or cache retention via Configure to shrink further.
+
+**Stale cache after old-backup restore:** the message cache is restored with messages that may have already expired by wall-clock time. They age out on their own; no corruption.
+
+**Base URL after restore:** preserved as stored. If your new server's URL differs from the restored one, update via Configure — attachment links in already-delivered notifications still point at the old URL (cannot be retroactively rewritten).
+
+## Health Checks
+
+| Check         | Method                      | Success message              |
+| ------------- | --------------------------- | ---------------------------- |
+| Web Interface | `GET /v1/health` (HTTP 200) | "The web interface is ready" |
 
 ## Dependencies
 
 None.
 
-## Backups
+## Limitations and Differences
 
-The `main` volume is backed up. This includes:
-- User database and credentials (`auth.db`)
-- Message cache (`cache.db`)
-- Attachment files (`attachments/`)
-- VAPID keys and settings (`store.json`, `webpush.db`)
+1. **No FCM / APNs push.** Native mobile apps long-poll your server; see [Push Notification Limitations](#push-notification-limitations).
+2. **No SMTP gateway.** `smtp-sender-addr` and related fields are not configured — ntfy cannot send outbound emails on your behalf. Inbound email-to-topic (ntfy's `smtp-server-*`) is also not configured.
+3. **No Twilio, Matrix, or Stripe integrations.** These require external accounts and are intentionally out of scope.
+4. **No iOS instant push via upstream-base-url.** The `upstream-base-url` setting (which would forward topics through ntfy.sh for iOS FCM delivery) is not configured.
+5. **Admin role is CLI-only.** The REST API can't create new admins or change an admin's password. StartOS actions hide this — Reset User Password transparently falls back to the CLI for admin targets.
+6. **`base-url` must not be a sub-path.** Upstream ntfy rejects `base-url` values with a URL path component.
+7. **Publishing via `ntfy.startos` on-box, `base-url` externally.** Internal StartOS services reach ntfy over the `http://ntfy.startos` VLAN hostname; external clients use whatever `base-url` resolves to. The two are different URLs and that's intentional.
 
-**Backup size:** Attachment files are automatically deleted after the cache retention period (default 12 hours). Backup size at any point is bounded by `cache retention × upload rate`, not total historical uploads. To reduce backup size, lower the attachment size limits or cache retention via **Configure Storage**.
+## What Is Unchanged from Upstream
 
-**On restore:** All users, passwords, topic ACLs, attachments, and web push subscriptions are restored. VAPID keys are preserved so existing browser push subscriptions remain valid. If your server URL has changed, update it via **Configure Base URL** — attachment links in already-delivered notifications will continue to point to the old URL (expected trade-off; cannot be retroactively fixed).
+Everything in the ntfy web UI, the ntfy REST API, the ntfy CLI, topic semantics, wildcard ACLs, message formats, priorities, tags, action buttons, click URLs, attachments, call notifications (if ever configured), per-user tokens, UnifiedPush distribution, web push, and long-poll subscription behavior all work exactly as documented at <https://docs.ntfy.sh>.
 
-**Stale cache:** The message cache is included in backups. After restoring from an old backup, the cache may contain messages that have since expired. These age out normally; no data is lost.
+## v2 Roadmap
 
-## Health Checks
-
-| Check         | Method                        | Messages                            |
-| ------------- | ----------------------------- | ----------------------------------- |
-| Web Interface | `GET /v1/health` (HTTP 200)   | Ready: "The web interface is ready" |
-
----
-
-## User Management
-
-NTFY has a built-in web admin panel accessible after logging in as `admin`. StartOS actions complement it — they handle operations the REST API does not support (such as granting anonymous topic access) and provide a convenient interface for common configuration tasks.
-
-### How topic access works
-
-NTFY's default access policy is **deny-all**: no topic is accessible to anyone until access is explicitly granted. This means:
-
-- Unauthenticated (anonymous) users can't access any topic by default
-- Registered users can log in but still can't access any topic until the admin provisions them
-- The `admin` user has the admin role and bypasses all access controls
-
-### Adding a new user
-
-1. Enable user registration if needed via **Toggle User Registration** (enabled by default)
-2. User visits the NTFY web UI and registers an account
-3. Admin runs **Provision User Topics** and enters the new user's username
-4. The user can now freely publish and subscribe to any topic prefixed with their username and an underscore — for example, if their username is `alice`, they can use `alice_alerts`, `alice_reminders`, `alice_status`, and so on — without any further admin involvement
-
-### Making a topic public (no login required)
-
-To allow anonymous access to a topic:
-
-1. Admin runs **Manage Topic Access**
-2. Enter the topic name and choose the access level:
-   - **Read & Write** — anyone can publish and subscribe
-   - **Read Only** — anyone can subscribe; login required to publish
-   - **Write Only** — anyone can publish; login required to subscribe
-   - **Deny** — removes previously granted anonymous access
-3. Wildcard patterns are supported (e.g. `announcements_*`)
-
-### Access tokens
-
-Users create and manage their own access tokens from the NTFY web UI profile page. Use tokens in scripts and apps instead of storing passwords.
-
-### Disabling self-registration
-
-Use **Toggle User Registration** to prevent new registrations. When disabled new accounts cannot be created until registration is re-enabled. No "Create User" action exists in StartOS.
-
----
-
-## Base URL and Hostnames
-
-NTFY embeds its `base-url` into attachment download links and web push notification payloads. It is not stored in the database — it is computed dynamically from the current config value.
-
-**Default:** The mDNS/LAN address (`yourserver.local`). Works on your home network. Not accessible remotely.
-
-**Changing the base URL:**
-- Use the **Configure Base URL** action to select a different address (Tor, public domain, or another LAN address).
-- Only a service restart is needed — no reinstall, no database migration.
-- The only consequence: attachment links in *already-delivered* notifications will point to the old URL. New notifications immediately use the new URL.
-
-**Access method summary:**
-
-| Access method           | Attachment links work? | Notes |
-| ----------------------- | ---------------------- | ----- |
-| LAN (home network)      | ✓ Always               | Best default experience |
-| Tor                     | ✗ If base-url=LAN      | Links resolve to `.local`, unreachable via Tor |
-| StartTunnel / public    | ✗ If base-url=LAN      | Links resolve to `.local`, unreachable remotely |
-
-For remote or Tor access, change the base URL to your StartTunnel domain or Tor address via **Configure Base URL**.
-
----
-
-## Mobile Apps and Clients
-
-**Official NTFY apps:** The official [Android](https://play.google.com/store/apps/details?id=io.heckel.ntfy) app ([F-Droid build](https://f-droid.org/en/packages/io.heckel.ntfy/) also available) and [iOS](https://apps.apple.com/app/ntfy/id1625396347) app work with self-hosted servers. In the app settings, set the server URL to your NTFY address and use your username/password or an access token. Note: reliable background delivery requires additional setup on both platforms — see **Push Notification Limitations** below.
-
-**CLI:** The `ntfy` CLI can publish and subscribe. Example:
-```bash
-ntfy publish -u admin:<pass> http://ntfy.local/mytopic "Hello"
-```
-```bash
-ntfy subscribe -u admin:<pass> http://ntfy.local/mytopic
-```
-You can also use an access token (generated from the web UI profile page) instead of a password: `--token <token>`.
-
-**UnifiedPush:** NTFY works as a [UnifiedPush](https://unifiedpush.org/) distributor for Android. Other privacy-focused apps on your device (Mastodon, Element, etc.) can use your self-hosted NTFY as their push relay instead of Google FCM — no extra configuration needed. Note: this is separate from NTFY's own notification delivery, which uses long-polling regardless. The server URL must be reachable from the device (Tor or StartTunnel recommended for use outside the home network).
-
-**Web push (browser):** VAPID keys are generated automatically on install. Browser push notifications work in the NTFY web UI — subscribe to a topic and notifications arrive even when the tab is closed, as long as the browser is running.
-
-**Message replay on reconnect:** When a client goes offline and reconnects, NTFY automatically replays missed messages from the cache. Clients catch up automatically. The replay window is the cache retention period (default 12 hours, configurable via **Configure Storage**).
-
----
-
-## Push Notification Limitations
-
-**No Firebase (FCM) / APNs push:** This self-hosted package does not use Google Firebase or Apple APNs. The official NTFY Android and iOS apps will **not** receive background push notifications via Google/Apple infrastructure. Instead, apps maintain a persistent connection to your server (long-polling).
-
-**Android — recommended setup:**
-1. Install the [NTFY Android app](https://play.google.com/store/apps/details?id=io.heckel.ntfy) (or the [F-Droid build](https://f-droid.org/en/packages/io.heckel.ntfy/) for a Google-free version).
-2. Set the server URL to your NTFY address and log in.
-3. **Disable battery optimization for the NTFY app** — this is critical. Without it, Android will kill the background connection and you will miss notifications. Go to Settings → Apps → NTFY → Battery → Unrestricted (wording varies by device/Android version). With battery exemption granted, real-time delivery is reliable.
-
-**iOS — recommended setup:**
-iOS restricts background apps more aggressively than Android. The native NTFY app cannot reliably deliver notifications when the app is backgrounded or the screen is locked. The recommended approach for iOS is to use the **NTFY web app via Safari**:
-1. Open your NTFY server URL in Safari on your iOS device (iOS 16.4 or later required).
-2. Tap the Share button → **Add to Home Screen**.
-3. Open the app from your home screen and subscribe to your topics.
-4. Enable browser notifications when prompted.
-
-This uses Apple's Web Push infrastructure (VAPID), which delivers notifications reliably even when Safari is closed — no ntfy.sh relay or Apple Developer account needed. Your self-hosted NTFY server already has VAPID keys configured automatically.
-
-**Web push works fully:** Browser notifications via Web Push (VAPID) are fully supported on desktop browsers and iOS Safari (16.4+) and do not require Firebase or Apple services.
-
----
-
-## Attachment Storage
-
-- Attachments are stored in `/data/attachments` on the main volume.
-- **Expiry:** Attachment files are deleted automatically when their message expires (controlled by cache retention — the same setting as message cache duration).
-- **When full:** New attachment uploads are rejected with an immediate error. Regular text/link/action notifications are completely unaffected — only new file uploads are blocked.
-- **No proactive alerts:** NTFY does not notify the admin when limits are approaching. Use **Server Stats** to check current usage and **Configure Storage** to adjust limits.
-- **Storage limits (defaults):**
-  - Per-file limit: 15 MB
-  - Total server limit: 5,000 MB
-  - Per-visitor quota: 100 MB
-
----
-
-## v2 Roadmap (Not in This Release)
-
-- **Create User action:** Allow the admin to create new user accounts directly from StartOS without enabling self-registration.
-- **SMTP email gateway:** Forward notifications to email via the StartOS system SMTP gateway.
-- **Telegram integration:** Forward notifications to Telegram via a bot.
-
----
+- **SMTP email gateway.** Forward notifications to email via the StartOS system SMTP gateway.
+- **Inbound email-to-topic.** Let users publish by emailing `<topic>@ntfy.myserver.tld`.
+- **Telegram integration.** Forward notifications to Telegram via a bot.
 
 ## Contributing
 
@@ -232,27 +244,53 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for build instructions and development wo
 
 ```yaml
 package_id: ntfy
-image: binwiederhier/ntfy:v2.19.2
+upstream_version: v2.21.0
+image: binwiederhier/ntfy:v2.21.0
 architectures: [x86_64, aarch64]
 volumes:
   main: /data
+  startos: (not mounted in daemon; holds store.json)
 ports:
   ui: 80
 dependencies: none
+startos_managed_settings:
+  - listen-http
+  - auth-file
+  - cache-file
+  - attachment-cache-dir
+  - web-push-file
+  - auth-default-access
+  - behind-proxy
+  - enable-login
+  - enable-metrics
+  - web-push-public-key
+  - web-push-private-key
+  - attachment-expiry-duration
+  - web-push-email-address (seeded; user-overridable via Configure)
+user_configurable_settings:
+  - base-url
+  - enable-signup
+  - attachment-file-size-limit
+  - attachment-total-size-limit
+  - visitor-attachment-total-size-limit
+  - cache-duration
+  - log-level
 actions:
-  - set-admin-password
-  - get-admin-credentials
-  - toggle-signup
-  - choose-base-url
-  - configure-storage
-  - configure-web-push
-  - set-log-level
+  - set-admin-password # hidden; critical task on install
+  - configure
+  - create-user
+  - reset-user-password
+  - delete-user
+  - grant-user-topic-access
+  - provision-publisher
+  - revoke-publisher
+  - set-anonymous-topic-access
   - server-stats
   - server-metrics
-  - manage-topic-access
-  - provision-user
 health_checks:
-  - GET /v1/health (HTTP 200)
+  - web-interface: GET /v1/health
 backup_volumes:
   - main
+  - startos
+internal_hostname: http://ntfy.startos:80
 ```

@@ -1,19 +1,86 @@
-import type { ServiceInterfaceFilled } from '@start9labs/start-sdk/base/lib/util/getServiceInterface'
+import { SubContainer, T, utils } from '@start9labs/start-sdk'
+import { sdk } from './sdk'
+import { storeJson } from './fileModels/store.json'
 
 export const uiPort = 80
 export const dataDir = '/data'
 
-/**
- * Pick the best fallback base URL from the service's interface addresses.
- * Priority: mDNS (LAN) → any other non-local HTTP address.
- * Used in main.ts and getAdminCredentials.
- */
-export function pickFallbackUrl(i: ServiceInterfaceFilled | null): string | null {
-  const addr = i?.addressInfo
-  if (!addr) return null
+export const authFile = `${dataDir}/auth.db`
+export const cacheFile = `${dataDir}/cache.db`
+export const webPushFile = `${dataDir}/webpush.db`
+export const attachmentDir = `${dataDir}/attachments`
+export const settingsFile = `${dataDir}/settings.yaml`
 
-  const mdns = addr.filter({ kind: 'mdns' }).format().find((u) => u.startsWith('http'))
-  if (mdns) return mdns
+export const randomPassword = {
+  charset: 'a-z,A-Z,1-9',
+  len: 22,
+}
 
-  return addr.nonLocal.format().find((u) => u.startsWith('http')) ?? null
+export function generateAdminPassword(): string {
+  return utils.getDefaultString(randomPassword)
+}
+
+export const mainMounts = (readonly = false) =>
+  sdk.Mounts.of().mountVolume({
+    volumeId: 'main',
+    subpath: null,
+    mountpoint: dataDir,
+    readonly,
+  })
+
+export const withMainSub = <R>(
+  effects: T.Effects,
+  name: string,
+  readonly: boolean,
+  fn: (sub: SubContainer<typeof sdk.manifest>) => Promise<R>,
+): Promise<R> =>
+  sdk.SubContainer.withTemp(
+    effects,
+    { imageId: 'main' },
+    mainMounts(readonly),
+    name,
+    fn,
+  )
+
+export const adminAuth = async (): Promise<{
+  baseUrl: string
+  authHeader: string
+}> => {
+  const token = await storeJson.read((s) => s.adminToken).once()
+  if (!token) {
+    throw new Error('Admin token not found. Run "Set Admin Password" first.')
+  }
+  return {
+    baseUrl: `http://localhost:${uiPort}`,
+    authHeader: `Bearer ${token}`,
+  }
+}
+
+export type NtfyPermission = 'read-write' | 'read-only' | 'write-only' | 'deny'
+
+export type NtfyUser = {
+  username: string
+  role: 'admin' | 'user' | 'anonymous'
+  tier: string
+  grants: Array<{ topic: string; permission: NtfyPermission }>
+}
+
+export const listUsers = async (): Promise<NtfyUser[]> => {
+  const { baseUrl, authHeader } = await adminAuth()
+  const res = await fetch(`${baseUrl}/v1/users`, {
+    headers: { Authorization: authHeader },
+  })
+  if (!res.ok) {
+    throw new Error(`Failed to list users: HTTP ${res.status}`)
+  }
+  // ntfy serializes `tier` and `grants` with omitempty, so they're absent
+  // (not empty) when there are none. Normalize here so callers can always
+  // iterate `grants` and read `tier`.
+  const raw = (await res.json()) as Array<Partial<NtfyUser>>
+  return raw.map((u) => ({
+    username: u.username ?? '',
+    role: u.role ?? 'user',
+    tier: u.tier ?? '',
+    grants: u.grants ?? [],
+  }))
 }
