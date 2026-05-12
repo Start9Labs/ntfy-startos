@@ -9,7 +9,6 @@ export const manifest = setupManifest({
   upstreamRepo: 'https://github.com/binwiederhier/ntfy',
   marketingUrl: 'https://ntfy.sh/',
   donationUrl: 'https://github.com/sponsors/binwiederhier',
-  docsUrls: ['https://docs.ntfy.sh/'],
   description: { short, long },
   volumes: ['main', 'startos'],
   images: {
