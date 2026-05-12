@@ -5,7 +5,7 @@ export const manifest = setupManifest({
   id: 'ntfy',
   title: 'NTFY',
   license: 'Apache-2.0',
-  packageRepo: 'https://github.com/Start9-Community/ntfy-startos',
+  packageRepo: 'https://github.com/Start9Labs/ntfy-startos',
   upstreamRepo: 'https://github.com/binwiederhier/ntfy',
   marketingUrl: 'https://ntfy.sh/',
   donationUrl: 'https://github.com/sponsors/binwiederhier',
