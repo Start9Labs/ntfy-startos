@@ -1,3 +1,3 @@
-## How the upstream version is pulled
+# CLAUDE.md
 
-- dockerTag in `startos/manifest/index.ts`: `binwiederhier/ntfy:<version>`
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the doc map and contribution workflow.

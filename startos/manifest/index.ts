@@ -5,16 +5,15 @@ export const manifest = setupManifest({
   id: 'ntfy',
   title: 'NTFY',
   license: 'Apache-2.0',
-  packageRepo: 'https://github.com/Start9-Community/ntfy-startos',
+  packageRepo: 'https://github.com/Start9Labs/ntfy-startos',
   upstreamRepo: 'https://github.com/binwiederhier/ntfy',
   marketingUrl: 'https://ntfy.sh/',
   donationUrl: 'https://github.com/sponsors/binwiederhier',
-  docsUrls: ['https://docs.ntfy.sh/'],
   description: { short, long },
   volumes: ['main', 'startos'],
   images: {
     main: {
-      source: { dockerTag: 'binwiederhier/ntfy:v2.21.0' },
+      source: { dockerTag: 'binwiederhier/ntfy:v2.22.0' },
       arch: ['x86_64', 'aarch64'],
     },
   },
