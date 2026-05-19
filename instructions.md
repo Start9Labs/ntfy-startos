@@ -2,7 +2,7 @@
 
 ## Documentation
 
-- [NTFY documentation](https://docs.ntfy.sh/) — upstream user and operator guide covering publishing, subscribing, mobile apps, and the HTTP API.
+- [NTFY documentation source](https://github.com/binwiederhier/ntfy/tree/main/docs) — upstream user and operator guide covering publishing, subscribing, mobile apps, and the HTTP API.
 
 ## What you get on StartOS
 
