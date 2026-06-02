@@ -1,6 +1,6 @@
 import { VersionInfo, IMPOSSIBLE } from '@start9labs/start-sdk'
 
-export const v_2_0_0_4 = VersionInfo.of({
+export const current = VersionInfo.of({
   version: '2.0.0:4',
   releaseNotes: {
     en_US: 'Bumps ntfy → 2.23.0.',
