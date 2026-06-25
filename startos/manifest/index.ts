@@ -13,7 +13,7 @@ export const manifest = setupManifest({
   volumes: ['main', 'startos'],
   images: {
     main: {
-      source: { dockerTag: 'binwiederhier/ntfy:v2.24.0' },
+      source: { dockerTag: 'binwiederhier/ntfy:v2.25.0' },
       arch: ['x86_64', 'aarch64'],
     },
   },

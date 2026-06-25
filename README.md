@@ -8,7 +8,7 @@
 > **Upstream docs:** <https://docs.ntfy.sh>
 >
 > Everything not listed in this document should behave the same as upstream
-> ntfy **v2.24.0**. If a feature, setting, or behavior is not mentioned here,
+> ntfy **v2.25.0**. If a feature, setting, or behavior is not mentioned here,
 > the upstream documentation is accurate and fully applicable.
 
 NTFY is a simple, privacy-first HTTP-based pub/sub notification service. Publishers `POST` to a topic URL; subscribers get an instant push. Self-hosted on StartOS, all traffic stays on your infrastructure. The package ships with authentication required by default and a deny-all topic ACL — you explicitly grant access to make anything reachable.
@@ -42,7 +42,7 @@ NTFY is a simple, privacy-first HTTP-based pub/sub notification service. Publish
 
 | Property      | Value                                                     |
 | ------------- | --------------------------------------------------------- |
-| Image         | `binwiederhier/ntfy:v2.24.0` (upstream, unmodified)       |
+| Image         | `binwiederhier/ntfy:v2.25.0` (upstream, unmodified)       |
 | Architectures | x86_64, aarch64                                           |
 | Entrypoint    | `ntfy serve --config /data/settings.yaml` (package-owned) |
 
@@ -244,8 +244,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for build instructions and development wo
 
 ```yaml
 package_id: ntfy
-upstream_version: v2.24.0
-image: binwiederhier/ntfy:v2.24.0
+upstream_version: v2.25.0
+image: binwiederhier/ntfy:v2.25.0
 architectures: [x86_64, aarch64]
 volumes:
   main: /data
