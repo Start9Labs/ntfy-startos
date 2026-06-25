@@ -1,4 +1,5 @@
 import { settingsYaml } from '../fileModels/settings.yaml'
+import { i18n } from '../i18n'
 import { sdk } from '../sdk'
 
 const { InputSpec, Value } = sdk
@@ -11,11 +12,15 @@ const inputSpec = InputSpec.of({
 
     if (!addressInfo) {
       return {
-        name: 'Base URL',
-        warning:
+        name: i18n('Base URL'),
+        warning: i18n(
           'No addresses available yet. Try again after the service has started.',
+        ),
         default: '_none',
-        values: { _none: 'No addresses available' } as Record<string, string>,
+        values: { _none: i18n('No addresses available') } as Record<
+          string,
+          string
+        >,
         disabled: ['_none'],
       }
     }
@@ -33,10 +38,13 @@ const inputSpec = InputSpec.of({
 
     if (Object.keys(values).length === 0) {
       return {
-        name: 'Base URL',
-        warning: 'No non-local addresses found.',
+        name: i18n('Base URL'),
+        warning: i18n('No non-local addresses found.'),
         default: '_none',
-        values: { _none: 'No addresses available' } as Record<string, string>,
+        values: { _none: i18n('No addresses available') } as Record<
+          string,
+          string
+        >,
         disabled: ['_none'],
       }
     }
@@ -47,97 +55,106 @@ const inputSpec = InputSpec.of({
       : Object.keys(values)[0]
 
     return {
-      name: 'Base URL',
-      description:
+      name: i18n('Base URL'),
+      description: i18n(
         'Public URL of this NTFY server, embedded in attachment download links and web push notifications. Required for attachments and web push to work.',
+      ),
       default: defaultUrl,
       values,
     }
   }),
   enableSignup: Value.triState({
-    name: 'Allow Self-Registration',
-    description:
-      'When enabled, anyone reaching this server can register an account. New users have no topic access until the admin runs "Provision User Topics".',
+    name: i18n('Allow Self-Registration'),
+    description: i18n(
+      'When enabled, anyone reaching this server can register an account. New users have no topic access until the admin runs "Grant User Topic Access".',
+    ),
     default: null,
-    footnote: 'Default: disabled',
+    footnote: i18n('Default: disabled'),
   }),
   attachmentFileSizeLimit: Value.number({
-    name: 'Max Attachment File Size',
-    description: 'Maximum size of a single uploaded file attachment.',
+    name: i18n('Max Attachment File Size'),
+    description: i18n('Maximum size of a single uploaded file attachment.'),
     required: false,
     default: null,
     min: 1,
     max: 4096,
     integer: true,
     units: 'MB',
-    footnote: 'Default: 15 MB',
+    footnote: i18n('Default: 15 MB'),
   }),
   attachmentTotalSizeLimit: Value.number({
-    name: 'Total Attachment Storage Limit',
-    description:
+    name: i18n('Total Attachment Storage Limit'),
+    description: i18n(
       'Server-wide cap on total attachment storage. New uploads are rejected when this limit is reached — regular notifications are not affected.',
+    ),
     required: false,
     default: null,
     min: 100,
     max: 1000000,
     integer: true,
     units: 'MB',
-    footnote: 'Default: 5000 MB (5 GB)',
+    footnote: i18n('Default: 5000 MB (5 GB)'),
   }),
   visitorAttachmentLimit: Value.number({
-    name: 'Per-User Attachment Quota',
-    description:
+    name: i18n('Per-User Attachment Quota'),
+    description: i18n(
       'Maximum total attachment storage per user. Prevents any single user from consuming all attachment space.',
+    ),
     required: false,
     default: null,
     min: 10,
     max: 100000,
     integer: true,
     units: 'MB',
-    footnote: 'Default: 100 MB',
+    footnote: i18n('Default: 100 MB'),
   }),
   cacheDuration: Value.number({
-    name: 'Message Retention',
-    description:
+    name: i18n('Message Retention'),
+    description: i18n(
       'How long messages are kept in the cache. Offline clients will receive messages published within this window when they reconnect.',
+    ),
     required: false,
     default: null,
     min: 1,
     max: 168,
     integer: true,
     units: 'hours',
-    footnote: 'Default: 12 hours',
+    footnote: i18n('Default: 12 hours'),
   }),
   vapidEmail: Value.text({
-    name: 'VAPID Contact Email',
-    description:
+    name: i18n('VAPID Contact Email'),
+    description: i18n(
       'Contact identifier sent to browser push services with VAPID. Required by some push providers for reliable web push delivery.',
+    ),
     required: false,
     default: null,
-    placeholder: 'you@example.com',
+    placeholder: i18n('you@example.com'),
     maxLength: 254,
     patterns: [
       {
         regex: '^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$',
-        description: 'Must be a valid email address',
+        description: i18n('Must be a valid email address'),
       },
     ],
     inputmode: 'email',
-    footnote: 'Default: none (web push may be rate-limited by some providers)',
+    footnote: i18n(
+      'Default: none (web push may be rate-limited by some providers)',
+    ),
   }),
   logLevel: Value.select({
-    name: 'Log Level',
-    description:
+    name: i18n('Log Level'),
+    description: i18n(
       'Verbosity of NTFY server logs. Use "debug" or "trace" for troubleshooting.',
+    ),
     default: 'info',
     values: {
-      trace: 'Trace',
-      debug: 'Debug',
-      info: 'Info',
-      warn: 'Warn',
-      error: 'Error',
+      trace: i18n('Trace'),
+      debug: i18n('Debug'),
+      info: i18n('Info'),
+      warn: i18n('Warn'),
+      error: i18n('Error'),
     },
-    footnote: 'Default: info',
+    footnote: i18n('Default: info'),
   }),
 })
 
@@ -145,12 +162,13 @@ export const configure = sdk.Action.withInput(
   'configure',
 
   async ({ effects }) => ({
-    name: 'Configure',
-    description:
+    name: i18n('Configure'),
+    description: i18n(
       'Configure NTFY server settings. Leave a field blank to use the upstream ntfy default. The service will restart to apply changes.',
+    ),
     warning: null,
     allowedStatuses: 'any',
-    group: 'General',
+    group: i18n('General'),
     visibility: 'enabled',
   }),
 
@@ -179,7 +197,9 @@ export const configure = sdk.Action.withInput(
   async ({ effects, input }) => {
     if (input.baseUrl === '_none') {
       throw new Error(
-        'No addresses available. Please try again after the service has started.',
+        i18n(
+          'No addresses available. Please try again after the service has started.',
+        ),
       )
     }
     if (
@@ -188,7 +208,13 @@ export const configure = sdk.Action.withInput(
       input.attachmentFileSizeLimit > input.attachmentTotalSizeLimit
     ) {
       throw new Error(
-        `Per-file limit (${input.attachmentFileSizeLimit} MB) cannot exceed total storage limit (${input.attachmentTotalSizeLimit} MB).`,
+        i18n(
+          'Per-file limit (${perFile} MB) cannot exceed total storage limit (${total} MB).',
+          {
+            perFile: input.attachmentFileSizeLimit,
+            total: input.attachmentTotalSizeLimit,
+          },
+        ),
       )
     }
     if (
@@ -197,7 +223,13 @@ export const configure = sdk.Action.withInput(
       input.visitorAttachmentLimit > input.attachmentTotalSizeLimit
     ) {
       throw new Error(
-        `Per-user quota (${input.visitorAttachmentLimit} MB) cannot exceed total storage limit (${input.attachmentTotalSizeLimit} MB).`,
+        i18n(
+          'Per-user quota (${perUser} MB) cannot exceed total storage limit (${total} MB).',
+          {
+            perUser: input.visitorAttachmentLimit,
+            total: input.attachmentTotalSizeLimit,
+          },
+        ),
       )
     }
 
@@ -220,8 +252,10 @@ export const configure = sdk.Action.withInput(
 
     return {
       version: '1',
-      title: 'Settings Updated',
-      message: 'Settings saved. The service will restart to apply changes.',
+      title: i18n('Settings Updated'),
+      message: i18n(
+        'Settings saved. The service will restart to apply changes.',
+      ),
       result: null,
     }
   },

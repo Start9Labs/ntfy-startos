@@ -1,4 +1,5 @@
 import { settingsYaml } from '../../fileModels/settings.yaml'
+import { i18n } from '../../i18n'
 import { sdk } from '../../sdk'
 import { adminAuth, attachmentDir, withMainSub } from '../../utils'
 
@@ -6,12 +7,13 @@ export const serverStats = sdk.Action.withoutInput(
   'server-stats',
 
   async ({ effects }) => ({
-    name: 'Server Stats',
-    description:
+    name: i18n('Server Stats'),
+    description: i18n(
       'View NTFY server statistics: version, base URL, message counts, account counts (users and publishers), attachment storage, and feature flags.',
+    ),
     warning: null,
     allowedStatuses: 'only-running',
-    group: 'Monitoring',
+    group: i18n('Monitoring'),
     visibility: 'enabled',
   }),
 
@@ -32,7 +34,11 @@ export const serverStats = sdk.Action.withoutInput(
     ])
 
     if (!statsRes.ok) {
-      throw new Error(`Failed to fetch stats: HTTP ${statsRes.status}`)
+      throw new Error(
+        i18n('Failed to fetch stats: HTTP ${status}', {
+          status: statsRes.status,
+        }),
+      )
     }
 
     const stats = (await statsRes.json()) as {
@@ -66,7 +72,7 @@ export const serverStats = sdk.Action.withoutInput(
     const signupEnabled = settings?.['enable-signup'] ?? false
     const webPushEnabled = !!settings?.['web-push-public-key']
 
-    let attachmentSize = 'n/a'
+    let attachmentSize = i18n('n/a')
     try {
       const duOutput = await withMainSub(
         effects,
@@ -90,7 +96,7 @@ export const serverStats = sdk.Action.withoutInput(
       type: 'single' as const,
       name,
       description: null,
-      value: value == null || value === '' ? 'n/a' : String(value),
+      value: value == null || value === '' ? i18n('n/a') : String(value),
       masked: false,
       copyable,
       qr: false,
@@ -102,55 +108,55 @@ export const serverStats = sdk.Action.withoutInput(
         : null
 
     const boolLabel = (v: boolean | undefined) =>
-      typeof v === 'boolean' ? (v ? 'enabled' : 'disabled') : null
+      typeof v === 'boolean' ? (v ? i18n('enabled') : i18n('disabled')) : null
 
     return {
       version: '1',
-      title: 'NTFY Server Stats',
+      title: i18n('NTFY Server Stats'),
       message: null,
       result: {
         type: 'group',
         value: [
           {
             type: 'group',
-            name: 'Server',
+            name: i18n('Server'),
             description: null,
             value: [
-              single('Version', version, true),
-              single('Base URL', configuredBaseUrl, true),
+              single(i18n('Version'), version, true),
+              single(i18n('Base URL'), configuredBaseUrl, true),
             ],
           },
           {
             type: 'group',
-            name: 'Activity',
+            name: i18n('Activity'),
             description: null,
             value: [
-              single('Messages in cache', stats.messages),
-              single('Message rate', rate),
+              single(i18n('Messages in cache'), stats.messages),
+              single(i18n('Message rate'), rate),
             ],
           },
           {
             type: 'group',
-            name: 'Accounts',
+            name: i18n('Accounts'),
             description: null,
             value: [
-              single('Users', humanCount),
-              single('Publishers', publisherCount),
+              single(i18n('Users'), humanCount),
+              single(i18n('Publishers'), publisherCount),
             ],
           },
           {
             type: 'group',
-            name: 'Attachments',
+            name: i18n('Attachments'),
             description: null,
-            value: [single('Storage used', attachmentSize)],
+            value: [single(i18n('Storage used'), attachmentSize)],
           },
           {
             type: 'group',
-            name: 'Feature flags',
+            name: i18n('Feature flags'),
             description: null,
             value: [
-              single('Self-registration', boolLabel(signupEnabled)),
-              single('Web push (VAPID)', boolLabel(webPushEnabled)),
+              single(i18n('Self-registration'), boolLabel(signupEnabled)),
+              single(i18n('Web push (VAPID)'), boolLabel(webPushEnabled)),
             ],
           },
         ],

@@ -8,8 +8,8 @@
 > **Upstream docs:** <https://docs.ntfy.sh>
 >
 > Everything not listed in this document should behave the same as upstream
-> ntfy **v2.23.0**. If a feature, setting, or behavior is not mentioned here,
-> the upstream documentation is accurate and fully applicable.
+> ntfy. If a feature, setting, or behavior is not mentioned here, the upstream
+> documentation is accurate and fully applicable.
 
 NTFY is a simple, privacy-first HTTP-based pub/sub notification service. Publishers `POST` to a topic URL; subscribers get an instant push. Self-hosted on StartOS, all traffic stays on your infrastructure. The package ships with authentication required by default and a deny-all topic ACL — you explicitly grant access to make anything reachable.
 
@@ -32,8 +32,6 @@ NTFY is a simple, privacy-first HTTP-based pub/sub notification service. Publish
 - [Dependencies](#dependencies)
 - [Limitations and Differences](#limitations-and-differences)
 - [What Is Unchanged from Upstream](#what-is-unchanged-from-upstream)
-- [v2 Roadmap](#v2-roadmap)
-- [Contributing](#contributing)
 - [Quick Reference for AI Consumers](#quick-reference-for-ai-consumers)
 
 ---
@@ -42,7 +40,7 @@ NTFY is a simple, privacy-first HTTP-based pub/sub notification service. Publish
 
 | Property      | Value                                                     |
 | ------------- | --------------------------------------------------------- |
-| Image         | `binwiederhier/ntfy:v2.23.0` (upstream, unmodified)       |
+| Image         | `binwiederhier/ntfy` (upstream, unmodified)               |
 | Architectures | x86_64, aarch64                                           |
 | Entrypoint    | `ntfy serve --config /data/settings.yaml` (package-owned) |
 
@@ -228,24 +226,13 @@ None.
 
 Everything in the ntfy web UI, the ntfy REST API, the ntfy CLI, topic semantics, wildcard ACLs, message formats, priorities, tags, action buttons, click URLs, attachments, call notifications (if ever configured), per-user tokens, UnifiedPush distribution, web push, and long-poll subscription behavior all work exactly as documented at <https://docs.ntfy.sh>.
 
-## v2 Roadmap
-
-- **SMTP email gateway.** Forward notifications to email via the StartOS system SMTP gateway.
-- **Inbound email-to-topic.** Let users publish by emailing `<topic>@ntfy.myserver.tld`.
-- **Telegram integration.** Forward notifications to Telegram via a bot.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for build instructions and development workflow.
-
 ---
 
 ## Quick Reference for AI Consumers
 
 ```yaml
 package_id: ntfy
-upstream_version: v2.23.0
-image: binwiederhier/ntfy:v2.23.0
+image: binwiederhier/ntfy
 architectures: [x86_64, aarch64]
 volumes:
   main: /data

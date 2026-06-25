@@ -1,4 +1,5 @@
 import { sdk } from '../../sdk'
+import { i18n } from '../../i18n'
 import {
   authFile,
   generateAdminPassword,
@@ -10,36 +11,41 @@ const { InputSpec, Value } = sdk
 
 const inputSpec = InputSpec.of({
   packageId: Value.text({
-    name: 'Publisher ID',
-    description:
+    name: i18n('Publisher ID'),
+    description: i18n(
       'A stable identifier for the publisher — typically a StartOS package ID (e.g. "uptime-kuma") for wired-up services, or any descriptive slug for external tools (e.g. "my-cron", "home-assistant-ext"). Becomes the ntfy username "pkg_<id>".',
+    ),
     required: true,
     default: null,
-    placeholder: 'e.g. uptime-kuma',
+    placeholder: i18n('e.g. uptime-kuma'),
     minLength: 1,
     maxLength: 64,
     patterns: [
       {
         regex: '^[a-z0-9-]+$',
-        description:
+        description: i18n(
           'Publisher ID must be lowercase alphanumeric with hyphens only.',
+        ),
       },
     ],
     inputmode: 'text',
   }),
   topic: Value.text({
-    name: 'Topic',
-    description: 'The topic the service will publish to. Wildcards supported.',
+    name: i18n('Topic'),
+    description: i18n(
+      'The topic the service will publish to. Wildcards supported.',
+    ),
     required: true,
     default: null,
-    placeholder: 'e.g. uptime-kuma_myserver',
+    placeholder: i18n('e.g. uptime-kuma_myserver'),
     minLength: 1,
     maxLength: 64,
     patterns: [
       {
         regex: '^[a-zA-Z0-9_*-]+$',
-        description:
+        description: i18n(
           'Topic may only contain letters, numbers, underscores, hyphens, and the wildcard "*".',
+        ),
       },
     ],
     inputmode: 'text',
@@ -50,12 +56,13 @@ export const provisionPublisher = sdk.Action.withInput(
   'provision-publisher',
 
   async ({ effects }) => ({
-    name: 'Provision Publisher',
-    description:
+    name: i18n('Provision Publisher'),
+    description: i18n(
       'Mint a scoped, write-only automation account for a service or external tool that publishes to NTFY (a StartOS package, a cron script, etc.). Any regular user can publish too; use this when you want a dedicated account that only has permission to publish to one topic, so the credentials can be handed to automation without granting broader access. Creates a `pkg_<id>` user, grants write-only access to the chosen topic, and returns a never-expiring token. Tear down with "Revoke Publisher".',
+    ),
     warning: null,
     allowedStatuses: 'only-running',
-    group: 'Publishers',
+    group: i18n('Publishers'),
     visibility: 'enabled',
   }),
 
@@ -82,7 +89,9 @@ export const provisionPublisher = sdk.Action.withInput(
         if (addRes.exitCode !== 0) {
           const msg = String(addRes.stderr || addRes.stdout || 'unknown error')
           if (!msg.toLowerCase().includes('already exists')) {
-            throw new Error(`Failed to create publisher user: ${msg}`)
+            throw new Error(
+              i18n('Failed to create publisher user: ${msg}', { msg }),
+            )
           }
         }
 
@@ -98,8 +107,11 @@ export const provisionPublisher = sdk.Action.withInput(
           'write-only',
         ])
         if (accessRes.exitCode !== 0) {
+          const detail = String(
+            accessRes.stderr || accessRes.stdout || 'unknown error',
+          )
           throw new Error(
-            `Failed to grant topic access: ${accessRes.stderr || accessRes.stdout || 'unknown error'}`,
+            i18n('Failed to grant topic access: ${detail}', { detail }),
           )
         }
 
@@ -110,14 +122,16 @@ export const provisionPublisher = sdk.Action.withInput(
           { env: { NTFY_AUTH_FILE: authFile } },
         )
         if (tokenRes.exitCode !== 0) {
-          throw new Error(
-            `Failed to mint token: ${tokenRes.stderr || tokenRes.stdout || 'unknown error'}`,
+          const detail = String(
+            tokenRes.stderr || tokenRes.stdout || 'unknown error',
           )
+          throw new Error(i18n('Failed to mint token: ${detail}', { detail }))
         }
         const match = String(tokenRes.stdout || '').match(/\btk_\S+/)
         if (!match) {
+          const output = String(tokenRes.stdout)
           throw new Error(
-            `Could not parse token from output: ${tokenRes.stdout}`,
+            i18n('Could not parse token from output: ${output}', { output }),
           )
         }
         return match[0]
@@ -126,14 +140,17 @@ export const provisionPublisher = sdk.Action.withInput(
 
     return {
       version: '1',
-      title: 'Publisher Provisioned',
-      message: `Credentials for "${packageId}" on topic "${topic}".`,
+      title: i18n('Publisher Provisioned'),
+      message: i18n('Credentials for "${packageId}" on topic "${topic}".', {
+        packageId,
+        topic,
+      }),
       result: {
         type: 'group',
         value: [
           {
             type: 'single',
-            name: 'publishUrl',
+            name: i18n('publishUrl'),
             description: null,
             value: 'http://ntfy.startos',
             masked: false,
@@ -142,7 +159,7 @@ export const provisionPublisher = sdk.Action.withInput(
           },
           {
             type: 'single',
-            name: 'token',
+            name: i18n('token'),
             description: null,
             value: token,
             masked: true,
@@ -151,7 +168,7 @@ export const provisionPublisher = sdk.Action.withInput(
           },
           {
             type: 'single',
-            name: 'topic',
+            name: i18n('topic'),
             description: null,
             value: topic,
             masked: false,
@@ -160,7 +177,7 @@ export const provisionPublisher = sdk.Action.withInput(
           },
           {
             type: 'single',
-            name: 'username',
+            name: i18n('username'),
             description: null,
             value: username,
             masked: false,

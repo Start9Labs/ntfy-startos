@@ -1,3 +1,4 @@
+import { i18n } from '../../i18n'
 import { sdk } from '../../sdk'
 import {
   authFile,
@@ -20,10 +21,10 @@ const inputSpec = InputSpec.of({
     )
     if (selectable.length === 0) {
       return {
-        name: 'User',
-        warning: 'No users exist. Create one with "Create User" first.',
+        name: i18n('User'),
+        warning: i18n('No users exist. Create one with "Create User" first.'),
         default: '_none',
-        values: { _none: 'No users' } as Record<string, string>,
+        values: { _none: i18n('No users') } as Record<string, string>,
         disabled: ['_none'],
       }
     }
@@ -34,11 +35,13 @@ const inputSpec = InputSpec.of({
     const values: Record<string, string> = {}
     for (const u of selectable) {
       values[u.username] =
-        u.role === 'admin' ? `${u.username} (admin)` : u.username
+        u.role === 'admin'
+          ? i18n('${username} (admin)', { username: u.username })
+          : u.username
     }
     return {
-      name: 'User',
-      description: 'The user whose password will be reset.',
+      name: i18n('User'),
+      description: i18n('The user whose password will be reset.'),
       default: selectable[0].username,
       values,
     }
@@ -49,12 +52,13 @@ export const resetUserPassword = sdk.Action.withInput(
   'reset-user-password',
 
   async ({ effects }) => ({
-    name: 'Reset User Password',
-    description:
+    name: i18n('Reset User Password'),
+    description: i18n(
       "Generate a new random password for any user, including the admin. The old password will no longer work. Tokens (including the admin's management token) survive password changes.",
+    ),
     warning: null,
     allowedStatuses: 'only-running',
-    group: 'Users',
+    group: i18n('Users'),
     visibility: 'enabled',
   }),
 
@@ -65,7 +69,7 @@ export const resetUserPassword = sdk.Action.withInput(
   async ({ effects, input }) => {
     const { username } = input
     if (username === '_none') {
-      throw new Error('No users available.')
+      throw new Error(i18n('No users available.'))
     }
     const password = generateAdminPassword()
 
@@ -78,8 +82,9 @@ export const resetUserPassword = sdk.Action.withInput(
           env: { NTFY_AUTH_FILE: authFile, NTFY_PASSWORD: password },
         })
         if (res.exitCode !== 0) {
+          const detail = String(res.stderr || res.stdout || 'unknown error')
           throw new Error(
-            `Failed to reset password: ${res.stderr || res.stdout || 'unknown error'}`,
+            i18n('Failed to reset password: ${detail}', { detail }),
           )
         }
       },
@@ -87,15 +92,16 @@ export const resetUserPassword = sdk.Action.withInput(
 
     return {
       version: '1',
-      title: 'Password Reset',
-      message:
+      title: i18n('Password Reset'),
+      message: i18n(
         'Copy the new password below. It will not be shown again — re-run this action to rotate again.',
+      ),
       result: {
         type: 'group',
         value: [
           {
             type: 'single',
-            name: 'Username',
+            name: i18n('Username'),
             description: null,
             value: username,
             masked: false,
@@ -104,7 +110,7 @@ export const resetUserPassword = sdk.Action.withInput(
           },
           {
             type: 'single',
-            name: 'New Password',
+            name: i18n('New Password'),
             description: null,
             value: password,
             masked: true,
