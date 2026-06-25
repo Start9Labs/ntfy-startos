@@ -1,4 +1,5 @@
 import { sdk } from '../../sdk'
+import { i18n } from '../../i18n'
 import {
   listUsers,
   settingsFile,
@@ -13,13 +14,14 @@ const EVERYONE_ALIAS = '*' // ntfy stores the anonymous user as "*" internally
 
 const inputSpec = InputSpec.of({
   topic: Value.union({
-    name: 'Topic',
-    description:
+    name: i18n('Topic'),
+    description: i18n(
       'Topic pattern to set anonymous access on. Wildcards are supported — e.g. "public_*" matches all topics beginning with "public_".',
+    ),
     default: 'existing',
     variants: Variants.of({
       existing: {
-        name: 'Choose Existing',
+        name: i18n('Choose Existing'),
         spec: InputSpec.of({
           pattern: Value.dynamicSelect(async () => {
             const users = await listUsers()
@@ -29,11 +31,12 @@ const inputSpec = InputSpec.of({
             }
             if (topics.size === 0) {
               return {
-                name: 'Existing Topic',
-                warning:
+                name: i18n('Existing Topic'),
+                warning: i18n(
                   'No topics have been configured yet. Switch to "Enter New" to create the first grant.',
+                ),
                 default: '_none',
-                values: { _none: 'No topics' } as Record<string, string>,
+                values: { _none: i18n('No topics') } as Record<string, string>,
                 disabled: ['_none'],
               }
             }
@@ -41,7 +44,7 @@ const inputSpec = InputSpec.of({
             const values: Record<string, string> = {}
             for (const t of sorted) values[t] = t
             return {
-              name: 'Existing Topic',
+              name: i18n('Existing Topic'),
               default: sorted[0],
               values,
             }
@@ -49,22 +52,24 @@ const inputSpec = InputSpec.of({
         }),
       },
       new: {
-        name: 'Enter New',
+        name: i18n('Enter New'),
         spec: InputSpec.of({
           pattern: Value.text({
-            name: 'New Topic',
-            description:
+            name: i18n('New Topic'),
+            description: i18n(
               'A new topic or pattern to set anonymous access on. Use "*" as a wildcard.',
+            ),
             required: true,
             default: null,
-            placeholder: 'e.g. announcements or public_*',
+            placeholder: i18n('e.g. announcements or public_*'),
             minLength: 1,
             maxLength: 64,
             patterns: [
               {
                 regex: '^[a-zA-Z0-9_*-]+$',
-                description:
+                description: i18n(
                   'Topic may only contain letters, numbers, underscores, hyphens, and the wildcard "*".',
+                ),
               },
             ],
             inputmode: 'text',
@@ -74,15 +79,16 @@ const inputSpec = InputSpec.of({
     }),
   }),
   permission: Value.select({
-    name: 'Permission',
-    description:
+    name: i18n('Permission'),
+    description: i18n(
       'Level of anonymous access. "Deny" explicitly blocks — useful to carve an exception out of a broader public wildcard grant.',
+    ),
     default: 'read-only',
     values: {
-      'read-write': 'Read & Write — anyone can subscribe and publish',
-      'read-only': 'Read Only — anyone can subscribe',
-      'write-only': 'Write Only — anyone can publish',
-      deny: 'Deny — no anonymous access',
+      'read-write': i18n('Read & Write — anyone can subscribe and publish'),
+      'read-only': i18n('Read Only — anyone can subscribe'),
+      'write-only': i18n('Write Only — anyone can publish'),
+      deny: i18n('Deny — no anonymous access'),
     },
   }),
 })
@@ -91,12 +97,13 @@ export const setAnonymousTopicAccess = sdk.Action.withInput(
   'set-anonymous-topic-access',
 
   async ({ effects }) => ({
-    name: 'Set Anonymous Topic Access',
-    description:
+    name: i18n('Set Anonymous Topic Access'),
+    description: i18n(
       'Grant or deny unauthenticated ("everyone") access to a topic. Use this to make a topic publicly readable, publicly writable, or to explicitly block anonymous access. After applying, the full list of topics with anonymous access is shown.',
+    ),
     warning: null,
     allowedStatuses: 'only-running',
-    group: 'Public Access',
+    group: i18n('Public Access'),
     visibility: 'enabled',
   }),
 
@@ -110,7 +117,9 @@ export const setAnonymousTopicAccess = sdk.Action.withInput(
     const topic = input.topic.value.pattern
 
     if (topic === '_none') {
-      throw new Error('No existing topics available — switch to "Enter New".')
+      throw new Error(
+        i18n('No existing topics available — switch to "Enter New".'),
+      )
     }
 
     await withMainSub(
@@ -128,18 +137,21 @@ export const setAnonymousTopicAccess = sdk.Action.withInput(
           permission satisfies NtfyPermission,
         ])
         if (result.exitCode !== 0) {
+          const detail = String(
+            result.stderr || result.stdout || 'unknown error',
+          )
           throw new Error(
-            `Failed to set anonymous access: ${result.stderr || result.stdout || 'unknown error'}`,
+            i18n('Failed to set anonymous access: ${detail}', { detail }),
           )
         }
       },
     )
 
     const permissionLabel: Record<NtfyPermission, string> = {
-      'read-write': 'read & write',
-      'read-only': 'read-only',
-      'write-only': 'write-only',
-      deny: 'denied',
+      'read-write': i18n('read & write'),
+      'read-only': i18n('read-only'),
+      'write-only': i18n('write-only'),
+      deny: i18n('denied'),
     }
 
     // Show all current anonymous grants so admins see the public-access picture.
@@ -152,18 +164,25 @@ export const setAnonymousTopicAccess = sdk.Action.withInput(
 
     return {
       version: '1',
-      title: 'Anonymous Access Updated',
-      message: `"${topic}": ${permissionLabel[permission as NtfyPermission]} for everyone.`,
+      title: i18n('Anonymous Access Updated'),
+      message: i18n('"${topic}": ${perm} for everyone.', {
+        topic,
+        perm: permissionLabel[permission as NtfyPermission],
+      }),
       result: {
         type: 'group',
         value: [
           {
             type: 'group',
-            name: 'Current anonymous grants',
+            name: i18n('Current anonymous grants'),
             description:
               grants.length === 0
-                ? 'No anonymous grants configured.'
-                : `${grants.length} topic${grants.length === 1 ? '' : 's'} with anonymous access.`,
+                ? i18n('No anonymous grants configured.')
+                : grants.length === 1
+                  ? i18n('1 topic with anonymous access.')
+                  : i18n('${count} topics with anonymous access.', {
+                      count: grants.length,
+                    }),
             value: grants.map((g) => ({
               type: 'single' as const,
               name: g.topic,

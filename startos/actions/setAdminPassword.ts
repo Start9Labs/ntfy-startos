@@ -1,4 +1,5 @@
 import { storeJson } from '../fileModels/store.json'
+import { i18n } from '../i18n'
 import { sdk } from '../sdk'
 import { authFile, generateAdminPassword, withMainSub } from '../utils'
 
@@ -6,9 +7,10 @@ export const setAdminPassword = sdk.Action.withoutInput(
   'set-admin-password',
 
   async ({ effects }) => ({
-    name: 'Set Admin Password',
-    description:
+    name: i18n('Set Admin Password'),
+    description: i18n(
       'Create the NTFY admin account and mint a management token. This is a one-time setup action — to rotate the admin password later, use "Reset User Password" and select the admin user.',
+    ),
     warning: null,
     allowedStatuses: 'any',
     group: null,
@@ -36,7 +38,8 @@ export const setAdminPassword = sdk.Action.withoutInput(
         )
         if (addResult.exitCode !== 0) {
           throw new Error(
-            'NTFY: Failed to create admin user.\n' +
+            i18n('NTFY: Failed to create admin user.') +
+              '\n' +
               (addResult.stderr || addResult.stdout || '(no output)'),
           )
         }
@@ -50,14 +53,16 @@ export const setAdminPassword = sdk.Action.withoutInput(
         })
         if (tokenResult.exitCode !== 0) {
           throw new Error(
-            'NTFY: Failed to create admin token.\n' +
+            i18n('NTFY: Failed to create admin token.') +
+              '\n' +
               (tokenResult.stderr || tokenResult.stdout || '(no output)'),
           )
         }
         const match = String(tokenResult.stdout || '').match(/\btk_\S+/)
         if (!match) {
           throw new Error(
-            'NTFY: Could not parse admin token from output:\n' +
+            i18n('NTFY: Could not parse admin token from output:') +
+              '\n' +
               tokenResult.stdout,
           )
         }
@@ -69,14 +74,14 @@ export const setAdminPassword = sdk.Action.withoutInput(
 
     return {
       version: '1',
-      title: 'Admin Password Set',
-      message: 'Your admin user credentials are below.',
+      title: i18n('Admin Password Set'),
+      message: i18n('Your admin user credentials are below.'),
       result: {
         type: 'group',
         value: [
           {
             type: 'single',
-            name: 'Username',
+            name: i18n('Username'),
             description: null,
             value: 'admin',
             masked: false,
@@ -85,7 +90,7 @@ export const setAdminPassword = sdk.Action.withoutInput(
           },
           {
             type: 'single',
-            name: 'Password',
+            name: i18n('Password'),
             description: null,
             value: password,
             masked: true,

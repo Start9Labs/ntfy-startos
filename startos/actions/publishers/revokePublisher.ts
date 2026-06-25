@@ -1,4 +1,5 @@
 import { sdk } from '../../sdk'
+import { i18n } from '../../i18n'
 import { authFile, listUsers, withMainSub } from '../../utils'
 
 const { InputSpec, Value } = sdk
@@ -12,10 +13,10 @@ const inputSpec = InputSpec.of({
     )
     if (publishers.length === 0) {
       return {
-        name: 'Publisher',
-        warning: 'No provisioned publishers exist.',
+        name: i18n('Publisher'),
+        warning: i18n('No provisioned publishers exist.'),
         default: '_none',
-        values: { _none: 'No provisioned publishers' } as Record<
+        values: { _none: i18n('No provisioned publishers') } as Record<
           string,
           string
         >,
@@ -28,8 +29,8 @@ const inputSpec = InputSpec.of({
       values[u.username] = u.username.slice(PKG_PREFIX.length)
     }
     return {
-      name: 'Publisher',
-      description: 'The provisioned publisher to deprovision.',
+      name: i18n('Publisher'),
+      description: i18n('The provisioned publisher to deprovision.'),
       default: publishers[0].username,
       values,
     }
@@ -40,12 +41,13 @@ export const revokePublisher = sdk.Action.withInput(
   'revoke-publisher',
 
   async ({ effects }) => ({
-    name: 'Revoke Publisher',
-    description:
+    name: i18n('Revoke Publisher'),
+    description: i18n(
       'Delete a provisioned automation account (a `pkg_*` user created via Provision Publisher) — its topic grants and all its tokens cascade. The service or script using those credentials will stop publishing until it re-provisions. Does not affect regular users who can publish to topics via their own grants.',
+    ),
     warning: null,
     allowedStatuses: 'only-running',
-    group: 'Publishers',
+    group: i18n('Publishers'),
     visibility: 'enabled',
   }),
 
@@ -56,7 +58,7 @@ export const revokePublisher = sdk.Action.withInput(
   async ({ effects, input }) => {
     const { username } = input
     if (username === '_none') {
-      throw new Error('No provisioned publishers available.')
+      throw new Error(i18n('No provisioned publishers available.'))
     }
 
     await withMainSub(
@@ -68,17 +70,22 @@ export const revokePublisher = sdk.Action.withInput(
           env: { NTFY_AUTH_FILE: authFile },
         })
         if (res.exitCode !== 0) {
+          const detail = String(res.stderr || res.stdout || 'unknown error')
           throw new Error(
-            `Failed to revoke publisher: ${res.stderr || res.stdout || 'unknown error'}`,
+            i18n('Failed to revoke publisher: ${detail}', { detail }),
           )
         }
       },
     )
 
+    const id = username.slice(PKG_PREFIX.length)
     return {
       version: '1',
-      title: 'Publisher Revoked',
-      message: `"${username.slice(PKG_PREFIX.length)}" has been deprovisioned. Topic grants and tokens removed.`,
+      title: i18n('Publisher Revoked'),
+      message: i18n(
+        '"${id}" has been deprovisioned. Topic grants and tokens removed.',
+        { id },
+      ),
       result: null,
     }
   },
