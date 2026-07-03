@@ -204,6 +204,7 @@ export default {
     199: 'Contraseña restablecida',
     200: 'Copia la nueva contraseña de abajo. No se volverá a mostrar — vuelve a ejecutar esta acción para rotarla de nuevo.',
     201: 'Nueva contraseña',
+    202: 'NTFY aún no es accesible en la red interna.',
   },
   de_DE: {
     0: 'Starte NTFY!',
@@ -408,6 +409,7 @@ export default {
     199: 'Passwort zurückgesetzt',
     200: 'Kopiere das neue Passwort unten. Es wird nicht erneut angezeigt — führe diese Aktion erneut aus, um erneut zu rotieren.',
     201: 'Neues Passwort',
+    202: 'NTFY ist im internen Netzwerk noch nicht erreichbar.',
   },
   pl_PL: {
     0: 'Uruchamianie NTFY!',
@@ -612,6 +614,7 @@ export default {
     199: 'Hasło zresetowane',
     200: 'Skopiuj nowe hasło poniżej. Nie zostanie ono wyświetlone ponownie — uruchom tę akcję ponownie, aby zmienić je kolejny raz.',
     201: 'Nowe hasło',
+    202: 'NTFY nie jest jeszcze osiągalny w sieci wewnętrznej.',
   },
   fr_FR: {
     0: 'Démarrage de NTFY !',
@@ -816,5 +819,6 @@ export default {
     199: 'Mot de passe réinitialisé',
     200: 'Copiez le nouveau mot de passe ci-dessous. Il ne sera plus affiché — relancez cette action pour le changer à nouveau.',
     201: 'Nouveau mot de passe',
+    202: "NTFY n'est pas encore accessible sur le réseau interne.",
   },
 } satisfies Record<string, LangDict>

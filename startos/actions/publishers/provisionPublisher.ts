@@ -4,6 +4,8 @@ import {
   authFile,
   generateAdminPassword,
   settingsFile,
+  uiHostId,
+  uiInterfaceId,
   withMainSub,
 } from '../../utils'
 
@@ -64,6 +66,9 @@ export const provisionPublisher = sdk.Action.withInput(
     allowedStatuses: 'only-running',
     group: i18n('Publishers'),
     visibility: 'enabled',
+    // Dependent packages call this via `effects.action.run` to mint their own
+    // scoped publisher and capture the returned token.
+    access: 'dependent',
   }),
 
   inputSpec,
@@ -74,6 +79,27 @@ export const provisionPublisher = sdk.Action.withInput(
     const { packageId, topic } = input
     const username = `pkg_${packageId}`
     const label = `startos:${packageId}`
+
+    // The service's own LXC-bridge (lxcbr0) URL for its `ui` interface — the
+    // address dependents publish to over the internal network. Replaces the
+    // retired `ntfy.startos` DNS name.
+    const publishUrl = await sdk.host
+      .getOwn(effects, uiHostId, (host) => {
+        const iface =
+          host &&
+          Object.values(host.bindings)
+            .flatMap((b) => Object.values(b.interfaces))
+            .find((i) => i.id === uiInterfaceId)
+        return iface
+          ? iface.addressInfo
+              .filter({ kind: 'bridge', predicate: (h) => !h.ssl })
+              .format('urlstring')[0]
+          : undefined
+      })
+      .once()
+    if (!publishUrl) {
+      throw new Error(i18n('NTFY is not yet reachable on the internal network.'))
+    }
 
     const token = await withMainSub(
       effects,
@@ -152,7 +178,7 @@ export const provisionPublisher = sdk.Action.withInput(
             type: 'single',
             name: i18n('publishUrl'),
             description: null,
-            value: 'http://ntfy.startos',
+            value: publishUrl,
             masked: false,
             copyable: true,
             qr: false,

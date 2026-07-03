@@ -208,6 +208,7 @@ const dict = {
   'Password Reset': 199,
   'Copy the new password below. It will not be shown again — re-run this action to rotate again.': 200,
   'New Password': 201,
+  'NTFY is not yet reachable on the internal network.': 202,
 } as const
 
 /**

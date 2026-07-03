@@ -1,13 +1,21 @@
 import { settingsYaml } from '../fileModels/settings.yaml'
 import { i18n } from '../i18n'
 import { sdk } from '../sdk'
+import { uiHostId, uiInterfaceId } from '../utils'
 
 const { InputSpec, Value } = sdk
 
 const inputSpec = InputSpec.of({
   baseUrl: Value.dynamicSelect(async ({ effects }) => {
-    const addressInfo = await sdk.serviceInterface
-      .getOwn(effects, 'ui', (i) => i?.addressInfo ?? null)
+    const addressInfo = await sdk.host
+      .getOwn(effects, uiHostId, (host) => {
+        const iface =
+          host &&
+          Object.values(host.bindings)
+            .flatMap((b) => Object.values(b.interfaces))
+            .find((i) => i.id === uiInterfaceId)
+        return iface?.addressInfo ?? null
+      })
       .once()
 
     if (!addressInfo) {

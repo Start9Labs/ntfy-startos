@@ -5,6 +5,11 @@ import { storeJson } from './fileModels/store.json'
 export const uiPort = 80
 export const dataDir = '/data'
 
+// Host id (the `sdk.MultiHost.of` group) vs. the interface id exported on it —
+// distinct ids, both needed for `sdk.host.getOwn` lookups.
+export const uiHostId = 'ui-multi'
+export const uiInterfaceId = 'ui'
+
 export const authFile = `${dataDir}/auth.db`
 export const cacheFile = `${dataDir}/cache.db`
 export const webPushFile = `${dataDir}/webpush.db`
