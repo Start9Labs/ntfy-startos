@@ -77,7 +77,7 @@ Run **Configure** to change anything in the right column. The service restarts t
 | --------- | ---- | -------- | ------------------- | ---------------------------- |
 | Web UI    | 80   | HTTP     | NTFY web UI and API | LAN (mDNS), Tor, StartTunnel |
 
-StartOS terminates TLS externally; the container itself serves plain HTTP on port 80. Other StartOS packages on the same box can reach ntfy at `http://ntfy.startos` on the internal VLAN.
+StartOS terminates TLS externally; the container itself serves plain HTTP on port 80. Other StartOS packages on the same box reach ntfy over the LXC bridge (`lxcbr0`) — the plain-HTTP bridge URL of the `ui` interface, which is exactly what **Provision Publisher** returns as `publishUrl`. The bridge address is dynamic, so there is no fixed internal hostname; a dependent that needs it calls Provision Publisher and reads `publishUrl` from the result. (Before start-sdk 2.0 this was the fixed `http://ntfy.startos` DNS name; 2.0 retired cross-container `.startos` DNS in favor of the bridge.)
 
 ## Actions
 
@@ -104,6 +104,8 @@ Manage human accounts and their per-user topic access.
 ### Publishers
 
 "Publisher" in this package is specific: a scoped, write-only automation account (username `pkg_<id>`), minted for a service or script that only needs to publish to a single topic. It is **not** a separate ntfy role — any regular user with write access can publish too. Publishers exist so you can hand credentials to automation (StartOS packages, cron jobs, external tools) without granting broader account access.
+
+Both **Provision Publisher** and **Revoke Publisher** are marked `access: 'dependent'`, so a dependent StartOS package can invoke them directly via `effects.action.run` — provisioning its own `pkg_<id>` account on setup (capturing the returned `token` and internal bridge `publishUrl`) and revoking it on uninstall, without user interaction. Non-dependent callers queue them as user tasks instead.
 
 | Action                  | Purpose                                                                                                                                               | Availability | Inputs / Outputs                                                               |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------ |
@@ -220,7 +222,7 @@ None.
 4. **No iOS instant push via upstream-base-url.** The `upstream-base-url` setting (which would forward topics through ntfy.sh for iOS FCM delivery) is not configured.
 5. **Admin role is CLI-only.** The REST API can't create new admins or change an admin's password. StartOS actions hide this — Reset User Password transparently falls back to the CLI for admin targets.
 6. **`base-url` must not be a sub-path.** Upstream ntfy rejects `base-url` values with a URL path component.
-7. **Publishing via `ntfy.startos` on-box, `base-url` externally.** Internal StartOS services reach ntfy over the `http://ntfy.startos` VLAN hostname; external clients use whatever `base-url` resolves to. The two are different URLs and that's intentional.
+7. **Publishing over the LXC bridge on-box, `base-url` externally.** Internal StartOS services reach ntfy over the LXC bridge (`lxcbr0`) — the `publishUrl` returned by **Provision Publisher** — while external clients use whatever `base-url` resolves to. The two are different URLs and that's intentional. (Before start-sdk 2.0 the on-box address was the fixed `http://ntfy.startos` DNS name; 2.0 retired cross-container `.startos` DNS in favor of the bridge.)
 
 ## What Is Unchanged from Upstream
 
@@ -269,8 +271,8 @@ actions:
   - reset-user-password
   - delete-user
   - grant-user-topic-access
-  - provision-publisher
-  - revoke-publisher
+  - provision-publisher # access: dependent (callable by dependents via effects.action.run)
+  - revoke-publisher # access: dependent
   - set-anonymous-topic-access
   - server-stats
   - server-metrics
@@ -279,5 +281,5 @@ health_checks:
 backup_volumes:
   - main
   - startos
-internal_hostname: http://ntfy.startos:80
+internal_address: LXC bridge (lxcbr0) URL of the ui interface; dynamic — surfaced to dependents as provision-publisher's publishUrl
 ```
