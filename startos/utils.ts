@@ -47,6 +47,9 @@ export const withMainSub = <R>(
     fn,
   )
 
+// Only the monitoring actions authenticate against the running server; the
+// management actions drive the CLI against /data instead, which is what makes
+// them work on a wedged instance. Keep that split.
 export const adminAuth = async (): Promise<{
   baseUrl: string
   authHeader: string

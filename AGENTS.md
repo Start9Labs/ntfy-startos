@@ -6,13 +6,14 @@ Develop it inside a StartOS packaging workspace created by `start-cli s9pk init-
 which provides the packaging guide and agent context one level up. If you're reading this in a
 bare clone with no workspace, the full guide is at <https://docs.start9.com/packaging>.
 
-Work this package's `TODO.md` from top to bottom. Keep `README.md` (architecture, for developers and LLMs) and `instructions.md` (end-user docs) in sync with your changes.
+Work this package's `TODO.md` from top to bottom. Keep `README.md` (technical reference for an AI support or administering agent) and `instructions.md` (end-user docs) in sync with your changes.
 
 ## This repo
 
-- **Package id is `ntfy`.** The single `ui` interface (ntfy's web UI + HTTP publish API, port 80) binds on the `ui-multi` host — the host id (`sdk.MultiHost.of` group) and interface id differ, so `sdk.host.getOwn` lookups go through `uiHostId` / `uiInterfaceId` (exported from `startos/utils.ts`).
-- **Dependent-callable provisioning.** `provision-publisher` and `revoke-publisher` (`startos/actions/publishers/`) carry `access: 'dependent'`, so a dependent package can call them directly via `effects.action.run` — provision mints a scoped, write-only `pkg_<id>` publisher account and returns a never-expiring `token` plus the LXC-bridge `publishUrl` (ntfy's `ui` interface reached over the internal network); revoke tears that account down (e.g. on the dependent's uninstall). Non-dependents still queue these as user tasks.
-
-## Inspecting a running install
-
-To run a command inside the service's container (read its generated config, grep app logs), use `start-cli package attach ntfy -n ntfy-main-sub -- <cmd>`. Select the subcontainer by **name** with `-n` (the name passed to `SubContainer.of` in `main.ts` — here `ntfy-main-sub`) or by image with `-i`. Note: `-s/--subcontainer` matches the internal **Guid**, not the name, so passing a name to `-s` fails with "no matching subcontainers".
+- **`ntfy user add` refuses a non-existent auth file, so setup must `touch` it first.** A zero-byte file passes the stat check and ntfy's SQLite manager runs its `CREATE TABLE` migrations on first open — that `touch` is why Set Admin Password works on a fresh volume.
+- **The admin token, not the admin password, is what the package keeps.** Tokens survive password changes, so the monitoring actions keep working after a rotation. Never store the password.
+- **`behind-proxy: true` is load-bearing for rate limiting**, not cosmetic: StartOS terminates TLS in front of ntfy, so without it every client presents as the proxy's single IP.
+- **Install must fail if the mDNS address does not resolve.** A server with no `base-url` silently breaks attachment links and web push; better to refuse the install.
+- **`web-push-email-address` is seeded with a placeholder because ntfy refuses to start on a partial web-push config.** Don't remove the default in favour of leaving it unset.
+- **Provision/Revoke Publisher carry `access: 'dependent'` deliberately** — other packages call them via `effects.action.run` to mint and tear down their own scoped credentials. Changing their ids or input shapes breaks those callers.
+- **The publish URL handed to a dependent is the bridge address**, resolved from the interface's own host, not the retired `ntfy.startos` name.

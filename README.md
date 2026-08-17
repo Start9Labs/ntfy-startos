@@ -4,14 +4,15 @@
 
 # NTFY on StartOS
 
-> **Upstream repo:** <https://github.com/binwiederhier/ntfy>
-> **Upstream docs:** <https://docs.ntfy.sh>
->
 > Everything not listed in this document should behave the same as upstream
-> ntfy. If a feature, setting, or behavior is not mentioned here, the upstream
-> documentation is accurate and fully applicable.
+> ntfy. If a feature, setting, or behavior is not mentioned here, the
+> upstream documentation is accurate and fully applicable — see the
+> Documentation section of `instructions.md` for links.
 
-NTFY is a simple, privacy-first HTTP-based pub/sub notification service. Publishers `POST` to a topic URL; subscribers get an instant push. Self-hosted on StartOS, all traffic stays on your infrastructure. The package ships with authentication required by default and a deny-all topic ACL — you explicitly grant access to make anything reachable.
+[ntfy](https://github.com/binwiederhier/ntfy) is a pub-sub notification service: publish to a topic over HTTP, subscribe from a phone, a browser, or a script. This package closes the server by default — nothing is readable or writable without a grant — and drives ntfy's user, token, and access management through actions instead of a shell.
+
+- **Upstream repo:** <https://github.com/binwiederhier/ntfy>
+- **Wrapper repo:** <https://github.com/Start9Labs/ntfy-startos>
 
 ---
 
@@ -19,214 +20,187 @@ NTFY is a simple, privacy-first HTTP-based pub/sub notification service. Publish
 
 - [Image and Container Runtime](#image-and-container-runtime)
 - [Volume and Data Layout](#volume-and-data-layout)
-- [Installation and First-Run Flow](#installation-and-first-run-flow)
-- [Configuration Management](#configuration-management)
-- [Network Access and Interfaces](#network-access-and-interfaces)
-- [Actions](#actions)
-- [Base URL](#base-url)
-- [Mobile Apps and Clients](#mobile-apps-and-clients)
-- [Push Notification Limitations](#push-notification-limitations)
-- [Attachment Storage](#attachment-storage)
-- [Backups and Restore](#backups-and-restore)
-- [Health Checks](#health-checks)
+- [File Models](#file-models)
 - [Dependencies](#dependencies)
+- [Network Access and Interfaces](#network-access-and-interfaces)
+- [Installation and First-Run Flow](#installation-and-first-run-flow)
+- [Actions](#actions)
+- [Tasks](#tasks)
+- [Health Checks](#health-checks)
+- [Backups and Restore](#backups-and-restore)
 - [Limitations and Differences](#limitations-and-differences)
-- [What Is Unchanged from Upstream](#what-is-unchanged-from-upstream)
 - [Quick Reference for AI Consumers](#quick-reference-for-ai-consumers)
 
 ---
 
 ## Image and Container Runtime
 
-| Property      | Value                                                     |
-| ------------- | --------------------------------------------------------- |
-| Image         | `binwiederhier/ntfy` (upstream, unmodified)               |
-| Architectures | x86_64, aarch64                                           |
-| Entrypoint    | `ntfy serve --config /data/settings.yaml` (package-owned) |
+One upstream image, unmodified.
+
+| Property      | Value                                     |
+| ------------- | ----------------------------------------- |
+| Image         | `binwiederhier/ntfy`                      |
+| Architectures | x86_64, aarch64                           |
+| Command       | `ntfy serve --config /data/settings.yaml` |
+
+| Subcontainer    | Purpose                                                                          |
+| --------------- | -------------------------------------------------------------------------------- |
+| `ntfy-main-sub` | The `primary` daemon — the one to `attach` to                                    |
+| `ntfy-*-sub`    | Temporary; one per action, each running ntfy's own CLI against the auth database |
+
+Every user, token, and access-control action runs `ntfy` in a short-lived container against the same `/data` mount rather than talking to the running server, so most of them work whether or not the daemon is healthy. The monitoring actions are the exception — they query the live server's API.
 
 ## Volume and Data Layout
 
-| Volume    | Mount (inside container) | Contents                                                                                                     |
-| --------- | ------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `main`    | `/data`                  | `auth.db` (users + ACLs + tokens), `cache.db` (message cache), `webpush.db`, `attachments/`, `settings.yaml` |
-| `startos` | (not mounted in daemon)  | `store.json` — holds the admin management token minted on install                                            |
+Two volumes, and one of them never enters a container.
 
-The `settings.yaml` config file is owned and enforced by StartOS. Hand-editing it is pointless — fields are re-asserted to their enforced values on service restart.
+| Volume    | Mount Point   | Purpose                                                                            |
+| --------- | ------------- | ---------------------------------------------------------------------------------- |
+| `main`    | `/data`       | `settings.yaml`, the auth, cache, and web-push databases, and uploaded attachments |
+| `startos` | — (host side) | `store.json`; never mounted into a container                                       |
 
-## Installation and First-Run Flow
+Everything ntfy persists lives under `/data`: `auth.db` (users, tokens, grants), `cache.db` (retained messages), `webpush.db` (browser subscriptions), and `attachments/`.
 
-1. Install the service. StartOS seeds `settings.yaml` with VAPID keys and a `base-url` derived from the mDNS LAN address, and creates a critical task to set the admin password.
-2. Run the **Set Admin Password** critical task. An admin user is created, a never-expiring management token is minted and stored in `store.json`, and the password is shown once — copy it before closing the dialog.
-3. The service starts automatically.
-4. Open the web UI at your server's address and log in as `admin`.
+## File Models
 
-The management token in `store.json` lets the package's own actions (Grant User Topic Access, Provision Publisher, etc.) authenticate against ntfy's admin API without keeping the admin password around. It persists across password rotations.
+Two models: ntfy's own configuration, and a small store for the one credential the package keeps.
 
-## Configuration Management
+| File            | Volume    | Format | Modelled                | Written by                                    |
+| --------------- | --------- | ------ | ----------------------- | --------------------------------------------- |
+| `settings.yaml` | `main`    | YAML   | Yes — `FileHelper.yaml` | Install, every init, and the Configure action |
+| `store.json`    | `startos` | JSON   | Yes — `FileHelper.json` | The Set Admin Password action                 |
 
-| StartOS-managed (enforced in `settings.yaml`)                                                                                                                                               | Upstream-managed (via Configure action or ntfy web UI)                                                                                                                                   |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `listen-http: :80`, `auth-file`, `cache-file`, `attachment-cache-dir`, `web-push-file`, `auth-default-access: deny-all`, `behind-proxy: true`, `enable-login: true`, `enable-metrics: true` | `base-url`, `enable-signup`, `attachment-file-size-limit`, `attachment-total-size-limit`, `visitor-attachment-total-size-limit`, `cache-duration`, `web-push-email-address`, `log-level` |
-| VAPID keys (generated on install)                                                                                                                                                           | Per-user profile settings, tokens, subscriptions — managed in the ntfy web UI by the logged-in user                                                                                      |
+Within `settings.yaml`:
 
-Run **Configure** to change anything in the right column. The service restarts to apply changes.
+**Enforced** — rewritten whenever the package writes: the listen address, the three database paths, the attachment directory, and the four settings below.
 
-## Network Access and Interfaces
+**Seeded once at install** — the VAPID keypair for web push, generated by `ntfy webpush keys`, and `base-url`, set to the `.local` address. Both are required for web push and attachment links to work.
 
-| Interface | Port | Protocol | Purpose             | Access                       |
-| --------- | ---- | -------- | ------------------- | ---------------------------- |
-| Web UI    | 80   | HTTP     | NTFY web UI and API | LAN (mDNS), Tor, StartTunnel |
+**Yours** — everything the Configure action exposes: `base-url`, self-registration, the three attachment limits, message retention, the VAPID contact email, and the log level. Leaving a field blank removes the key, which hands the setting back to ntfy's own default.
 
-StartOS terminates TLS externally; the container itself serves plain HTTP on port 80. Other StartOS packages on the same box reach ntfy over the LXC bridge (`lxcbr0`) — the plain-HTTP bridge URL of the `ui` interface, which is exactly what **Provision Publisher** returns as `publishUrl`. The bridge address is dynamic, so there is no fixed internal hostname; a dependent that needs it calls Provision Publisher and reads `publishUrl` from the result. (Before start-sdk 2.0 this was the fixed `http://ntfy.startos` DNS name; 2.0 retired cross-container `.startos` DNS in favor of the bridge.)
+Six settings depart from upstream's defaults:
 
-## Actions
+| Key                          | Here          | Upstream     | Why                                                                                                           |
+| ---------------------------- | ------------- | ------------ | ------------------------------------------------------------------------------------------------------------- |
+| `auth-default-access`        | `deny-all`    | `read-write` | A personal server should not be a world-writable relay on first boot                                          |
+| `enable-login`               | `true`        | `false`      | Accounts are the whole access model here, so the login page has to exist                                      |
+| `behind-proxy`               | `true`        | `false`      | StartOS terminates TLS in front of ntfy; without this every client looks like one IP to the rate limiter      |
+| `enable-metrics`             | `true`        | `false`      | Backs the Server Metrics action                                                                               |
+| `attachment-expiry-duration` | `12h`         | `3h`         | Matches ntfy's own message-retention default, so an attachment cannot expire before the message linking to it |
+| `web-push-email-address`     | a placeholder | none         | ntfy refuses to start on a partial web-push configuration; Configure is where you replace it                  |
 
-Actions are grouped in the StartOS UI by intent. "Availability" is the action's `allowedStatuses`. Setter actions return the relevant current state in their result, so there are no separate "view" actions — use the ntfy web UI (Account → Users & Access, admin-only) to browse state before acting.
-
-### General
-
-| Action                 | Purpose                                                                                             | Availability | Notes                                                          |
-| ---------------------- | --------------------------------------------------------------------------------------------------- | ------------ | -------------------------------------------------------------- |
-| **Set Admin Password** | One-shot: create the admin user and mint the management token. Fired as a critical task on install. | Any          | Hidden. Use **Reset User Password** → `admin` to rotate later. |
-| **Configure**          | Set base URL, self-registration, attachment limits, cache retention, VAPID email, log level.        | Any          | Leave a field blank to use ntfy's upstream default.            |
-
-### Users
-
-Manage human accounts and their per-user topic access.
-
-| Action                      | Purpose                                                                                                                                                                | Availability | Inputs                                                                   |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------ |
-| **Create User**             | Create a regular user. Returns an auto-generated password shown once.                                                                                                  | Only running | Username                                                                 |
-| **Reset User Password**     | Rotate any user's password (including admin). Tokens survive.                                                                                                          | Only running | User (dynamicSelect, excludes anonymous and `pkg_*`)                     |
-| **Delete User**             | Delete a regular user. Admins cannot be deleted.                                                                                                                       | Only running | User (dynamicSelect, excludes admins and `pkg_*`)                        |
-| **Grant User Topic Access** | Grant or deny `read-write` / `read-only` / `write-only` / `deny` on a topic or pattern for a specific user. Replaces prior grant. Result lists the user's full grants. | Only running | User, topic (existing / new / personal-namespace `<user>_*`), permission |
-
-### Publishers
-
-"Publisher" in this package is specific: a scoped, write-only automation account (username `pkg_<id>`), minted for a service or script that only needs to publish to a single topic. It is **not** a separate ntfy role — any regular user with write access can publish too. Publishers exist so you can hand credentials to automation (StartOS packages, cron jobs, external tools) without granting broader account access.
-
-Both **Provision Publisher** and **Revoke Publisher** are marked `access: 'dependent'`, so a dependent StartOS package can invoke them directly via `effects.action.run` — provisioning its own `pkg_<id>` account on setup (capturing the returned `token` and internal bridge `publishUrl`) and revoking it on uninstall, without user interaction. Non-dependent callers queue them as user tasks instead.
-
-| Action                  | Purpose                                                                                                                                               | Availability | Inputs / Outputs                                                               |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------ |
-| **Provision Publisher** | Mint a scoped, write-only automation account for a service or external tool that publishes to NTFY. Returns credentials to hand to the caller.        | Only running | Publisher ID, topic. Returns `{publishUrl, token, topic, username: pkg_<id>}`. |
-| **Revoke Publisher**    | Delete a provisioned automation account; its topic grants and tokens cascade. Does not affect regular users' ability to publish via their own grants. | Only running | Publisher (dynamicSelect of `pkg_*` users)                                     |
-
-### Public Access
-
-Grant or deny unauthenticated ("everyone") access to topics. Separate from per-user access because public access is topic-scoped, not user-scoped.
-
-| Action                         | Purpose                                                                                                                                                      | Availability | Inputs                             |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ | ---------------------------------- |
-| **Set Anonymous Topic Access** | Grant or deny `read-write` / `read-only` / `write-only` / `deny` on a topic for anonymous clients. Result lists every topic currently with anonymous access. | Only running | Topic (existing / new), permission |
-
-### Monitoring
-
-| Action             | Purpose                                                                                                             | Availability |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| **Server Stats**   | Active version, base URL, message counts, account counts (users and publishers), attachment storage, feature flags. | Only running |
-| **Server Metrics** | Detailed Prometheus metrics: throughput, subscribers, attachment bytes, UnifiedPush / web push delivery counts.     | Only running |
-
-## Base URL
-
-`base-url` is embedded by ntfy into attachment download links (the URLs a subscriber taps to download a file) and into web-push notification click targets (the URL the browser opens when a push is tapped). It does **not** affect subscription binding — browser web-push subscriptions are tied to the origin where the user opens the web UI, not to `base-url`.
-
-Default seeded on install: the server's mDNS URL (`https://<server>.local:<port>`). Works on your home LAN; not reachable remotely.
-
-Change it via **Configure** to an externally reachable URL if you need:
-
-- Tap-to-download for attachments when you're off-LAN
-- Web-push notifications whose click target opens outside the home network
-
-Access methods:
-
-| Access from…          | With `base-url` = LAN mDNS | With `base-url` = StartTunnel / Tor |
-| --------------------- | -------------------------- | ----------------------------------- |
-| Home LAN              | Works                      | Works                               |
-| Outside (StartTunnel) | Attachment links broken    | Works                               |
-| Tor                   | Attachment links broken    | Works                               |
-
-Only one `base-url` at a time. Pick the widest-reachable URL your users actually use.
-
-## Mobile Apps and Clients
-
-**Official NTFY apps.** The [Android](https://play.google.com/store/apps/details?id=io.heckel.ntfy) app ([F-Droid build](https://f-droid.org/en/packages/io.heckel.ntfy/) available) and [iOS](https://apps.apple.com/app/ntfy/id1625396347) app both work with self-hosted servers — set the server URL to your externally reachable address and log in with username/password or an access token.
-
-**CLI.** The `ntfy` CLI can publish and subscribe:
-
-```bash
-ntfy publish -u admin:<pass> https://ntfy.myserver.tld/mytopic "Hello"
-ntfy subscribe --token <tk_...> https://ntfy.myserver.tld/mytopic
-```
-
-**UnifiedPush.** This server works as a [UnifiedPush](https://unifiedpush.org/) distributor for Android — other apps on your phone (Element, Mastodon, Tusky, FairEmail, etc.) can route their push through your ntfy instead of Google FCM. No extra server-side setup.
-
-**Web push in the browser.** VAPID keys are generated automatically on install. Subscribe to a topic in the web UI and browser notifications arrive even when the tab is closed.
-
-**Message replay on reconnect.** When a subscriber goes offline and reconnects, ntfy automatically re-delivers messages from the cache. Window = `cache-duration` (default 12 hours, tunable via Configure).
-
-## Push Notification Limitations
-
-This package does **not** relay through Google Firebase (FCM) or Apple APNs. The official NTFY Android and iOS apps work, but they maintain a persistent long-polling connection to your server — they do not receive push via Google/Apple infrastructure.
-
-**Android.** Works well if you disable battery optimization for the NTFY app (Settings → Apps → NTFY → Battery → Unrestricted). Without it, Android kills the background connection and you miss notifications.
-
-**iOS.** Apple's background-app restrictions make the native NTFY app unreliable. The recommended iOS path is the ntfy **web app via Safari**:
-
-1. Open your ntfy URL in Safari on iOS 16.4 or later.
-2. Share → Add to Home Screen.
-3. Open from the home screen and subscribe.
-4. Allow notifications.
-
-This uses Apple's Web Push (VAPID) infrastructure, which delivers reliably even when Safari is closed. No ntfy.sh relay or Apple Developer account needed.
-
-## Attachment Storage
-
-- Stored under `/data/attachments` on the `main` volume.
-- Expire automatically when their message expires (tied to `cache-duration`).
-- When the total limit is full, new uploads are rejected with an immediate error. Text/link/action notifications are unaffected.
-- ntfy does not proactively alert on approaching limits — check **Server Stats** and adjust via **Configure**.
-
-Defaults (upstream): per-file 15 MB, total 5000 MB, per-visitor 100 MB.
-
-## Backups and Restore
-
-Both `main` and `startos` volumes are backed up:
-
-- `auth.db`, `cache.db`, `webpush.db`, `attachments/`, `settings.yaml` (on `main`)
-- `store.json` (on `startos`) — the admin management token
-
-**On restore**, users, passwords, topic ACLs, attachments, and web-push subscriptions are all restored. VAPID keys are preserved, so existing browser subscriptions continue to work.
-
-**Backup size** is bounded by `cache-duration × upload rate`, not by total historical uploads — attachments age out of the cache regardless of backup history. Lower the attachment limits or cache retention via Configure to shrink further.
-
-**Stale cache after old-backup restore:** the message cache is restored with messages that may have already expired by wall-clock time. They age out on their own; no corruption.
-
-**Base URL after restore:** preserved as stored. If your new server's URL differs from the restored one, update via Configure — attachment links in already-delivered notifications still point at the old URL (cannot be retroactively rewritten).
-
-## Health Checks
-
-| Check         | Method                      | Success message              |
-| ------------- | --------------------------- | ---------------------------- |
-| Web Interface | `GET /v1/health` (HTTP 200) | "The web interface is ready" |
+`store.json` holds only `adminToken` — a never-expiring admin token minted at setup so the package's monitoring actions can authenticate against ntfy's admin API without keeping the password. Tokens survive password changes, so rotating the admin password does not invalidate it.
 
 ## Dependencies
 
-None.
+None. Other packages relate to ntfy in the opposite direction — see [Provision Publisher](#actions).
+
+## Network Access and Interfaces
+
+One interface, serving the web app, the subscribe/publish API, and the metrics endpoint.
+
+| Interface | Id   | Type | Port | Description               |
+| --------- | ---- | ---- | ---- | ------------------------- |
+| Web UI    | `ui` | ui   | 80   | The web interface of NTFY |
+
+The port is bound on the `ui-multi` MultiHost and is not masked.
+
+**`base-url` must be one of the addresses this interface publishes**, and Configure only offers those — the value is embedded in attachment download links and web-push payloads, so a wrong one breaks both. The dropdown forces `https://` on every option because StartOS terminates TLS at its proxy and the web app, loaded over https, would otherwise block its own fetches as mixed content.
+
+## Installation and First-Run Flow
+
+Install does three things before you see anything: it resolves the `.local` address and writes it as `base-url`, it generates the VAPID keypair web push needs, and it raises a `critical` task to create the admin account. **Install fails outright if the `.local` address cannot be resolved**, rather than starting a server with no usable base URL.
+
+Running that task creates the `admin` user with a generated password, shows it once, and mints the management token. Save the password when it is offered — the action does not show it again, and Reset User Password is the way back.
+
+**The server denies everything until you grant it.** A fresh install has one admin and no topic access for anyone else, which is the opposite of upstream's default. Publishing or subscribing from anything means either creating a user and granting them a topic, provisioning a publisher, or opening a topic to anonymous access.
+
+## Actions
+
+Eleven actions in five groups, plus the hidden setup action.
+
+### Set Admin Password (hidden)
+
+Not user-facing — the install task is what surfaces it. It creates the `admin` account, shows the generated password once, and mints the never-expiring management token into `store.json`.
+
+- **Repeat safety:** it is a one-time setup action. To rotate the admin password later, use Reset User Password and pick `admin`.
+
+### Configure
+
+Every general server setting: base URL, self-registration, attachment limits, message retention, VAPID contact email, and log level.
+
+- **What it changes:** the corresponding keys in `settings.yaml`.
+- **Cost:** seconds, then a restart.
+- **Repeat safety:** idempotent; the form is pre-filled from the current file.
+- **Blank means "upstream default"**, not zero — clearing a field removes the key rather than pinning it.
+- **The limits are checked against each other**: a per-file cap above the server-wide total, or a per-user quota above it, is rejected rather than written.
+
+### Users — Create User, Reset User Password, Delete User, Grant User Topic Access
+
+All four are **only available while the service is running** and all four operate on `auth.db` directly.
+
+- **Create User** adds an account and shows a generated password once. **The new user can do nothing** until granted a topic.
+- **Reset User Password** generates a new password for any account including `admin`. The old one stops working; tokens do not.
+- **Delete User** removes an account with its grants and tokens. Admins cannot be deleted.
+- **Grant User Topic Access** sets one permission — read-write, read-only, write-only, or deny — on a topic or a wildcard pattern, replacing any existing grant for that pair. It can scope a user to their own `<username>_*` namespace in one step, and shows the user's full grant list afterwards.
+
+### Publishers — Provision Publisher, Revoke Publisher
+
+A pair for automation, and **both are callable by dependent packages** rather than only by a person.
+
+- **Provision Publisher** mints a `pkg_<id>` account with write-only access to one topic and returns a never-expiring token, along with the bridge URL to publish to. It exists so credentials handed to a script or another service carry no more authority than publishing to that one topic. Any regular user can publish too; this is for when you want the narrower grant.
+- **Revoke Publisher** deletes such an account — grants and tokens cascade. Whatever was using those credentials stops publishing until it re-provisions.
+- **Repeat safety:** provisioning the same package id again re-mints; revoking one that is gone is an error, not a silent success.
+
+### Public Access — Set Anonymous Topic Access
+
+Grants or denies unauthenticated access to a topic, which is how a topic becomes publicly readable or publicly writable.
+
+- **Cost:** seconds, and it is the deliberate way to reopen what `auth-default-access: deny-all` closed.
+- **Repeat safety:** idempotent per topic; the full list of anonymously-accessible topics is shown afterwards.
+
+### Monitoring — Server Stats, Server Metrics
+
+Read-only, only while running, and the two that go through the live server's API using the stored admin token — so both fail with a clear message if Set Admin Password was never run. Server Metrics returns the Prometheus endpoint's output: throughput, topic and subscriber counts, attachment storage, and delivery stats.
+
+## Tasks
+
+One task, raised at install.
+
+| Task               | Severity   | Raised when | Cleared when    |
+| ------------------ | ---------- | ----------- | --------------- |
+| Set Admin Password | `critical` | At install  | The action runs |
+
+`critical` because until it runs there is no account at all, and with `deny-all` in force nothing can publish or subscribe — the server is running but unusable.
+
+## Health Checks
+
+One check, on the only daemon.
+
+| Check     | Displayed       | Method                             |
+| --------- | --------------- | ---------------------------------- |
+| `primary` | "Web Interface" | `GET /v1/health` on the local port |
+
+This is ntfy's own health endpoint rather than a port probe, so it reports the server's readiness and not merely that something is listening. A failure means ntfy did not come up — most often a `settings.yaml` value it rejects, which it names in the service logs. A partially-configured web push section is the classic one: ntfy refuses to start rather than running without it.
+
+## Backups and Restore
+
+Both volumes are copied wholesale — `sdk.Backups.ofVolumes('main', 'startos')`. No dump step and nothing excluded.
+
+- **Included:** `settings.yaml` with the VAPID keypair, `auth.db` with every user, token, and grant, retained messages, browser push subscriptions, uploaded attachments, and the admin token in `store.json`.
+- **Restore:** complete, and no task is raised — the admin account and its token come back with everything else.
+- **Check `base-url` after a restore.** It is not rebuilt from the live addresses, so if the restored server publishes different ones, attachment links and web push keep pointing at the old address until Configure is run.
 
 ## Limitations and Differences
 
-1. **No FCM / APNs push.** Native mobile apps long-poll your server; see [Push Notification Limitations](#push-notification-limitations).
-2. **No SMTP gateway.** `smtp-sender-addr` and related fields are not configured — ntfy cannot send outbound emails on your behalf. Inbound email-to-topic (ntfy's `smtp-server-*`) is also not configured.
-3. **No Twilio, Matrix, or Stripe integrations.** These require external accounts and are intentionally out of scope.
-4. **No iOS instant push via upstream-base-url.** The `upstream-base-url` setting (which would forward topics through ntfy.sh for iOS FCM delivery) is not configured.
-5. **Admin role is CLI-only.** The REST API can't create new admins or change an admin's password. StartOS actions hide this — Reset User Password transparently falls back to the CLI for admin targets.
-6. **`base-url` must not be a sub-path.** Upstream ntfy rejects `base-url` values with a URL path component.
-7. **Publishing over the LXC bridge on-box, `base-url` externally.** Internal StartOS services reach ntfy over the LXC bridge (`lxcbr0`) — the `publishUrl` returned by **Provision Publisher** — while external clients use whatever `base-url` resolves to. The two are different URLs and that's intentional. (Before start-sdk 2.0 the on-box address was the fixed `http://ntfy.startos` DNS name; 2.0 retired cross-container `.startos` DNS in favor of the bridge.)
-
-## What Is Unchanged from Upstream
-
-Everything in the ntfy web UI, the ntfy REST API, the ntfy CLI, topic semantics, wildcard ACLs, message formats, priorities, tags, action buttons, click URLs, attachments, call notifications (if ever configured), per-user tokens, UnifiedPush distribution, web push, and long-poll subscription behavior all work exactly as documented at <https://docs.ntfy.sh>.
+1. **The server denies everything by default.** Upstream ships `read-write` for unauthenticated visitors; here nothing works until a grant exists.
+2. **Install requires a resolvable `.local` address** and fails without one.
+3. **The admin password is shown once.** Reset User Password is the only recovery.
+4. **`base-url` is restricted to addresses this interface publishes** and does not follow a restore onto a differently-addressed server.
+5. **Login and metrics are enabled**, both off upstream.
+6. **A placeholder VAPID contact email is written at install** so ntfy will start; replace it via Configure if your push provider needs a real one.
+7. **Most management actions require the service to be running**, even though they work on the database rather than the API.
+8. **No riscv64 build.** x86_64 and aarch64 only.
 
 ---
 
@@ -235,51 +209,39 @@ Everything in the ntfy web UI, the ntfy REST API, the ntfy CLI, topic semantics,
 ```yaml
 package_id: ntfy
 image: binwiederhier/ntfy
-architectures: [x86_64, aarch64]
+architectures:
+  - x86_64
+  - aarch64
+subcontainers:
+  - ntfy-main-sub # the running daemon
+  - ntfy-init-sub # temporary; install-time VAPID key generation
+  - ntfy-set-admin-password-sub # temporary; one such sub per action
 volumes:
   main: /data
-  startos: (not mounted in daemon; holds store.json)
-ports:
-  ui: 80
-dependencies: none
-startos_managed_settings:
-  - listen-http
-  - auth-file
-  - cache-file
-  - attachment-cache-dir
-  - web-push-file
-  - auth-default-access
-  - behind-proxy
-  - enable-login
-  - enable-metrics
-  - web-push-public-key
-  - web-push-private-key
-  - attachment-expiry-duration
-  - web-push-email-address (seeded; user-overridable via Configure)
-user_configurable_settings:
-  - base-url
-  - enable-signup
-  - attachment-file-size-limit
-  - attachment-total-size-limit
-  - visitor-attachment-total-size-limit
-  - cache-duration
-  - log-level
+  startos: host side (store.json)
+file_models:
+  - /data/settings.yaml
+  - store.json
+startos_managed_env_vars:
+  - NTFY_AUTH_FILE # action subcontainers only
+  - NTFY_PASSWORD # action subcontainers only
+dependencies: []
+interfaces:
+  ui: { type: ui, port: 80 }
 actions:
-  - set-admin-password # hidden; critical task on install
+  - set-admin-password # hidden; surfaced by the install task
   - configure
-  - create-user
-  - reset-user-password
-  - delete-user
-  - grant-user-topic-access
-  - provision-publisher # access: dependent (callable by dependents via effects.action.run)
-  - revoke-publisher # access: dependent
-  - set-anonymous-topic-access
-  - server-stats
-  - server-metrics
+  - create-user # only-running
+  - reset-user-password # only-running
+  - delete-user # only-running
+  - grant-user-topic-access # only-running
+  - provision-publisher # only-running; access: dependent
+  - revoke-publisher # only-running; access: dependent
+  - set-anonymous-topic-access # only-running
+  - server-stats # only-running
+  - server-metrics # only-running
+tasks:
+  - { action: set-admin-password, severity: critical }
 health_checks:
-  - web-interface: GET /v1/health
-backup_volumes:
-  - main
-  - startos
-internal_address: LXC bridge (lxcbr0) URL of the ui interface; dynamic — surfaced to dependents as provision-publisher's publishUrl
+  - primary # displayed "Web Interface"; GET /v1/health
 ```
