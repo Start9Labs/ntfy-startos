@@ -98,7 +98,9 @@ export const provisionPublisher = sdk.Action.withInput(
       })
       .once()
     if (!publishUrl) {
-      throw new Error(i18n('NTFY is not yet reachable on the internal network.'))
+      throw new Error(
+        i18n('NTFY is not yet reachable on the internal network.'),
+      )
     }
 
     const token = await withMainSub(
