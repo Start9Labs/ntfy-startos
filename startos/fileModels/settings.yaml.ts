@@ -8,7 +8,7 @@ import {
   webPushFile,
 } from '../utils'
 
-const shape = z.object({
+const shape = z.looseObject({
   // --- Tier 1: enforced by the package ---
   'listen-http': z.literal(`:${uiPort}`).catch(`:${uiPort}`),
   'cache-file': z.literal(cacheFile).catch(cacheFile),
@@ -38,6 +38,10 @@ const shape = z.object({
   'attachment-file-size-limit': z.string().optional().catch(undefined),
   'attachment-total-size-limit': z.string().optional().catch(undefined),
   'visitor-attachment-total-size-limit': z.string().optional().catch(undefined),
+  'visitor-attachment-daily-bandwidth-limit': z
+    .string()
+    .optional()
+    .catch(undefined),
   'cache-duration': z.string().optional().catch(undefined),
   'log-level': z
     .enum(['trace', 'debug', 'info', 'warn', 'error'])
