@@ -209,6 +209,9 @@ const dict = {
   'Copy the new password below. It will not be shown again — re-run this action to rotate again.': 200,
   'New Password': 201,
   'NTFY is not yet reachable on the internal network.': 202,
+  'Per-User Daily Bandwidth': 203,
+  'Daily traffic budget per user for attachment downloads and for cached messages replayed to a poll request. Requests past the budget are rejected until the next day.': 204,
+  'Default: 500 MB': 205,
 } as const
 
 /**

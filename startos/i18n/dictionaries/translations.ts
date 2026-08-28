@@ -205,6 +205,9 @@ export default {
     200: 'Copia la nueva contraseña de abajo. No se volverá a mostrar — vuelve a ejecutar esta acción para rotarla de nuevo.',
     201: 'Nueva contraseña',
     202: 'NTFY aún no es accesible en la red interna.',
+    203: 'Ancho de banda diario por usuario',
+    204: 'Presupuesto diario de tráfico por usuario para las descargas de adjuntos y para los mensajes en caché reenviados a una petición de sondeo. Las peticiones que superan el presupuesto se rechazan hasta el día siguiente.',
+    205: 'Predeterminado: 500 MB',
   },
   de_DE: {
     0: 'Starte NTFY!',
@@ -410,6 +413,9 @@ export default {
     200: 'Kopiere das neue Passwort unten. Es wird nicht erneut angezeigt — führe diese Aktion erneut aus, um erneut zu rotieren.',
     201: 'Neues Passwort',
     202: 'NTFY ist im internen Netzwerk noch nicht erreichbar.',
+    203: 'Tägliche Bandbreite pro Benutzer',
+    204: 'Tägliches Datenvolumen pro Benutzer für Anhang-Downloads und für zwischengespeicherte Nachrichten, die an eine Poll-Anfrage ausgeliefert werden. Anfragen über dieses Volumen hinaus werden bis zum nächsten Tag abgelehnt.',
+    205: 'Standard: 500 MB',
   },
   pl_PL: {
     0: 'Uruchamianie NTFY!',
@@ -615,6 +621,9 @@ export default {
     200: 'Skopiuj nowe hasło poniżej. Nie zostanie ono wyświetlone ponownie — uruchom tę akcję ponownie, aby zmienić je kolejny raz.',
     201: 'Nowe hasło',
     202: 'NTFY nie jest jeszcze osiągalny w sieci wewnętrznej.',
+    203: 'Dzienny transfer na użytkownika',
+    204: 'Dzienny limit transferu na użytkownika dla pobierania załączników oraz dla wiadomości z pamięci podręcznej zwracanych w odpowiedzi na odpytanie. Żądania ponad ten limit są odrzucane do następnego dnia.',
+    205: 'Domyślnie: 500 MB',
   },
   fr_FR: {
     0: 'Démarrage de NTFY !',
@@ -820,5 +829,8 @@ export default {
     200: 'Copiez le nouveau mot de passe ci-dessous. Il ne sera plus affiché — relancez cette action pour le changer à nouveau.',
     201: 'Nouveau mot de passe',
     202: "NTFY n'est pas encore accessible sur le réseau interne.",
+    203: 'Bande passante quotidienne par utilisateur',
+    204: "Budget de trafic quotidien par utilisateur pour les téléchargements de pièces jointes et pour les messages en cache renvoyés à une requête d'interrogation. Les requêtes dépassant ce budget sont rejetées jusqu'au lendemain.",
+    205: 'Par défaut : 500 Mo',
   },
 } satisfies Record<string, LangDict>

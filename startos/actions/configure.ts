@@ -116,6 +116,19 @@ const inputSpec = InputSpec.of({
     units: 'MB',
     footnote: i18n('Default: 100 MB'),
   }),
+  visitorDailyBandwidthLimit: Value.number({
+    name: i18n('Per-User Daily Bandwidth'),
+    description: i18n(
+      'Daily traffic budget per user for attachment downloads and for cached messages replayed to a poll request. Requests past the budget are rejected until the next day.',
+    ),
+    required: false,
+    default: null,
+    min: 10,
+    max: 1000000,
+    integer: true,
+    units: 'MB',
+    footnote: i18n('Default: 500 MB'),
+  }),
   cacheDuration: Value.number({
     name: i18n('Message Retention'),
     description: i18n(
@@ -196,6 +209,9 @@ export const configure = sdk.Action.withInput(
       visitorAttachmentLimit: parseMegabytes(
         s?.['visitor-attachment-total-size-limit'],
       ),
+      visitorDailyBandwidthLimit: parseMegabytes(
+        s?.['visitor-attachment-daily-bandwidth-limit'],
+      ),
       cacheDuration: parseHours(s?.['cache-duration']),
       vapidEmail: s?.['web-push-email-address'] ?? null,
       logLevel: s?.['log-level'] ?? 'info',
@@ -252,6 +268,9 @@ export const configure = sdk.Action.withInput(
       ),
       'visitor-attachment-total-size-limit': formatMegabytes(
         input.visitorAttachmentLimit,
+      ),
+      'visitor-attachment-daily-bandwidth-limit': formatMegabytes(
+        input.visitorDailyBandwidthLimit,
       ),
       'cache-duration': formatHours(input.cacheDuration),
       'web-push-email-address': input.vapidEmail?.trim() || undefined,

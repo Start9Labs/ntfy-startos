@@ -29,7 +29,7 @@ Use the Web UI, the official Android or iOS apps, the `ntfy` CLI, or any HTTP cl
 
 #### General
 
-- **Configure** — base URL, self-registration on/off, per-file and total attachment size limits, per-user attachment quota, message cache retention, VAPID contact email, and log level. The service restarts to apply.
+- **Configure** — base URL, self-registration on/off, per-file and total attachment size limits, per-user attachment quota, per-user daily bandwidth, message cache retention, VAPID contact email, and log level. The service restarts to apply.
 
 #### Users
 
@@ -57,4 +57,4 @@ A "publisher" here is a scoped, write-only automation account (`pkg_<id>`) for h
 ## Limitations
 
 - **No FCM / APNs relay.** This server does not relay through Google Firebase or Apple Push Notification service. The native Android app works reliably if you disable battery optimization for it; on iOS, the most reliable path is to open the Web UI in Safari (16.4+) and **Add to Home Screen** — that uses Apple's Web Push and delivers even when Safari is closed.
-- **`settings.yaml` is package-managed.** Hand-editing it is pointless — fields the package owns are re-asserted on restart. Change settings through the **Configure** action.
+- **`settings.yaml` is package-managed.** Fields the package owns are re-asserted on restart, so hand-editing those is pointless; change them through the **Configure** action. Any other ntfy setting you add by hand is left alone.
