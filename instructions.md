@@ -85,9 +85,10 @@ A "publisher" here is a scoped, write-only automation account (`pkg_<id>`) for h
 - **Enable UnifiedPush** — one-step setup for UnifiedPush apps: grants anonymous write-only and a `unifiedpush` user read-only on `up*`, and returns the server URL and credentials. Safe to re-run; it reissues the password and leaves the grants unchanged.
 
 Both access actions open on a grant that is actually stored, so re-running one shows the
-current permission rather than a default. **Set Anonymous Topic Access** also labels every
-topic in its dropdown with the anonymous permission on it, and both actions print the full
-grant list after you apply.
+current permission rather than a default. The form is built once and does not re-read when
+you change the user or topic dropdown, so that only applies to the selection it opens on —
+**Set Anonymous Topic Access** labels every topic in its dropdown with the anonymous
+permission on it, and both actions print the full grant list after you apply.
 
 #### Monitoring
 

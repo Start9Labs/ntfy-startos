@@ -115,7 +115,7 @@ const inputSpec = InputSpec.of({
       'Level of access. "Deny" explicitly blocks — useful to revoke a previously granted permission or carve an exception out of a broader pattern.',
     ),
     footnote: i18n(
-      'Shows the grant stored for the selected user and topic when the form opened. The full grant list is shown after you apply.',
+      "Shows the selected user's grant on the selected topic as the form opened. It does not follow a change to the user or topic dropdowns; the full grant list is shown after you apply.",
     ),
     default: 'read-write',
     values: {
@@ -144,8 +144,12 @@ export const grantUserTopicAccess = sdk.Action.withInput(
   inputSpec,
 
   // Open on the first user's first grant, so re-running the action shows a
-  // real stored pair rather than the declared defaults. The grant list
-  // returned after applying is the authoritative view.
+  // real stored pair rather than the declared defaults.
+  //
+  // This is the opening state only: StartOS resolves the spec once per form
+  // open and never re-requests it, so changing the user or topic dropdown
+  // leaves this pair behind. The grant list returned after applying is the
+  // authoritative view.
   async ({ effects, prefill }) => {
     if (prefill) return prefill
     const users = (await listUsers()).filter(
