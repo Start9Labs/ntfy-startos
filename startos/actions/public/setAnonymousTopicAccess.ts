@@ -29,13 +29,11 @@ const inputSpec = InputSpec.of({
             for (const u of users) {
               for (const g of u.grants) topics.add(g.topic)
             }
-            // Label every option with the anonymous grant already on it. The
-            // permission field below is prefilled for whichever topic opens
-            // selected, but it cannot follow a change to this dropdown — the
-            // form renders once — so the state for the other topics has to
-            // live here. A bare option means anonymous has no grant on that
-            // topic: this list is the union of every user's topics, not just
-            // the anonymous ones.
+            // Label every option with the anonymous grant already on it, so
+            // every topic's state is legible at once and not just the one the
+            // form opened on. A bare option means anonymous has no grant on
+            // that topic: this list is the union of every user's topics, not
+            // just the anonymous ones.
             const anonUser = users.find(
               (u) => u.role === 'anonymous' || u.username === EVERYONE_ALIAS,
             )
@@ -106,7 +104,7 @@ const inputSpec = InputSpec.of({
       'Level of anonymous access. "Deny" explicitly blocks — useful to carve an exception out of a broader public wildcard grant.',
     ),
     footnote: i18n(
-      'Shows the anonymous grant on the topic selected above as the form opened. It does not follow a change to that dropdown — each option there is labelled with its own current permission.',
+      'Shows the anonymous grant stored for the topic selected above when the form opened. Each option in that dropdown is also labelled with its own current permission.',
     ),
     default: 'read-only',
     values: {
@@ -135,9 +133,7 @@ export const setAnonymousTopicAccess = sdk.Action.withInput(
   inputSpec,
 
   // Open on what is actually stored: the anonymous grant on the topic that
-  // will be selected. Only the opening pair can be prefilled — the form does
-  // not re-render when the topic dropdown changes — which is why that dropdown
-  // also labels every option with its own current permission.
+  // will be selected, rather than on the field's declared default.
   async ({ effects, prefill }) => {
     if (prefill) return prefill
     const users = await listUsers()

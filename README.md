@@ -175,7 +175,7 @@ The wildcard is deliberate: the ntfy app generates a fresh `up`-prefixed topic p
 - **Repeat safety:** re-running reissues the `unifiedpush` password and re-asserts both grants unchanged — the recovery path after a client reinstall.
 - **`base-url` is embedded at registration time.** Changing it afterwards invalidates every existing registration.
 
-Both actions prefill from `auth.db` when the form opens — Set Anonymous Topic Access on the first anonymous grant, Grant User Topic Access on the first user's first grant — so re-running an action shows what is actually stored rather than a declared default. The form renders once and does not re-read when a dropdown changes, so that pair is the opening state only; Set Anonymous Topic Access additionally labels every option in its topic dropdown with the anonymous permission on it, and the grant list returned after applying is the authoritative view.
+Both actions prefill from `auth.db` when the form opens — Set Anonymous Topic Access on the first anonymous grant, Grant User Topic Access on the first user's first grant — so re-running an action shows what is actually stored rather than a declared default. Set Anonymous Topic Access additionally labels every option in its topic dropdown with the anonymous permission on it, so all of them are legible at once. The grant list returned after applying is the authoritative view.
 
 ### Monitoring — Server Stats, Server Metrics
 
