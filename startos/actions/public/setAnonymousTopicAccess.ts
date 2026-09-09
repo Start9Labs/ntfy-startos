@@ -29,6 +29,15 @@ const inputSpec = InputSpec.of({
             for (const u of users) {
               for (const g of u.grants) topics.add(g.topic)
             }
+            // Current anonymous permission per topic, so the dropdown shows
+            // real state even though the permission field below cannot.
+            const anonUser = users.find(
+              (u) => u.role === 'anonymous' || u.username === EVERYONE_ALIAS,
+            )
+            const anonPermission = new Map<string, NtfyPermission>()
+            for (const g of anonUser?.grants ?? []) {
+              anonPermission.set(g.topic, g.permission)
+            }
             if (topics.size === 0) {
               return {
                 name: i18n('Existing Topic'),
@@ -42,7 +51,15 @@ const inputSpec = InputSpec.of({
             }
             const sorted = Array.from(topics).sort()
             const values: Record<string, string> = {}
-            for (const t of sorted) values[t] = t
+            for (const t of sorted) {
+              const current = anonPermission.get(t)
+              values[t] = current
+                ? i18n('${topic} — anonymous: ${permission}', {
+                    topic: t,
+                    permission: current,
+                  })
+                : t
+            }
             return {
               name: i18n('Existing Topic'),
               default: sorted[0],
@@ -82,6 +99,9 @@ const inputSpec = InputSpec.of({
     name: i18n('Permission'),
     description: i18n(
       'Level of anonymous access. "Deny" explicitly blocks — useful to carve an exception out of a broader public wildcard grant.',
+    ),
+    footnote: i18n(
+      'This always opens at the default and does not show the current grant. Nothing changes until you apply; the full grant list is shown afterwards.',
     ),
     default: 'read-only',
     values: {

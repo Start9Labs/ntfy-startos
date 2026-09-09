@@ -114,6 +114,12 @@ const inputSpec = InputSpec.of({
     description: i18n(
       'Level of access. "Deny" explicitly blocks — useful to revoke a previously granted permission or carve an exception out of a broader pattern.',
     ),
+    // The grant being edited depends on the topic chosen in this same form, so
+    // there is nothing to prefill from — the field always opens here. Say so,
+    // otherwise it reads as the stored grant having silently reverted.
+    footnote: i18n(
+      'This always opens at the default and does not show the current grant. Nothing changes until you apply; the full grant list is shown afterwards.',
+    ),
     default: 'read-write',
     values: {
       'read-write': i18n('Read & Write — subscribe and publish'),

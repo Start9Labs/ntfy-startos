@@ -212,6 +212,17 @@ const dict = {
   'Per-User Daily Bandwidth': 203,
   'Daily traffic budget per user for attachment downloads and for cached messages replayed to a poll request. Requests past the budget are rejected until the next day.': 204,
   'Default: 500 MB': 205,
+
+  // actions/public/enableUnifiedPush.ts (and shared permission footnote)
+  '${topic} — anonymous: ${permission}': 206,
+  'This always opens at the default and does not show the current grant. Nothing changes until you apply; the full grant list is shown afterwards.': 207,
+  'Enable UnifiedPush': 208,
+  'Set up this server as a UnifiedPush distributor backend, so apps like Element (Matrix) can receive push notifications through it instead of Google FCM. Grants anonymous write-only access on "up*" — required because a Matrix homeserver pushes without credentials, as the protocol has no field to carry them — and creates a "unifiedpush" user with read-only access on the same pattern for the ntfy app to subscribe with. Re-run at any time to reissue the password; the grants are idempotent.': 209,
+  'UnifiedPush Enabled': 210,
+  'Point the ntfy app at the server below, add these credentials under its "Manage users" setting, enable it as a UnifiedPush distributor, then select it in your app\'s notification settings. The server URL must be reachable from both the phone and the pushing homeserver.': 211,
+  'Server URL': 212,
+  'Not set — run "Configure" first.': 213,
+  'Topic Pattern': 214,
 } as const
 
 /**
