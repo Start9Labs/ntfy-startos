@@ -29,8 +29,13 @@ const inputSpec = InputSpec.of({
             for (const u of users) {
               for (const g of u.grants) topics.add(g.topic)
             }
-            // Current anonymous permission per topic, so the dropdown shows
-            // real state even though the permission field below cannot.
+            // Label every option with the anonymous grant already on it. The
+            // permission field below is prefilled for whichever topic opens
+            // selected, but it cannot follow a change to this dropdown — the
+            // form renders once — so the state for the other topics has to
+            // live here. A bare option means anonymous has no grant on that
+            // topic: this list is the union of every user's topics, not just
+            // the anonymous ones.
             const anonUser = users.find(
               (u) => u.role === 'anonymous' || u.username === EVERYONE_ALIAS,
             )
@@ -101,7 +106,7 @@ const inputSpec = InputSpec.of({
       'Level of anonymous access. "Deny" explicitly blocks — useful to carve an exception out of a broader public wildcard grant.',
     ),
     footnote: i18n(
-      'This always opens at the default and does not show the current grant. Nothing changes until you apply; the full grant list is shown afterwards.',
+      'Shows the anonymous grant on the topic selected above as the form opened. It does not follow a change to that dropdown — each option there is labelled with its own current permission.',
     ),
     default: 'read-only',
     values: {
@@ -129,7 +134,28 @@ export const setAnonymousTopicAccess = sdk.Action.withInput(
 
   inputSpec,
 
-  async () => ({}),
+  // Open on what is actually stored: the anonymous grant on the topic that
+  // will be selected. Only the opening pair can be prefilled — the form does
+  // not re-render when the topic dropdown changes — which is why that dropdown
+  // also labels every option with its own current permission.
+  async ({ effects, prefill }) => {
+    if (prefill) return prefill
+    const users = await listUsers()
+    const anon = users.find(
+      (u) => u.role === 'anonymous' || u.username === EVERYONE_ALIAS,
+    )
+    const current = (anon?.grants ?? [])
+      .slice()
+      .sort((a, b) => a.topic.localeCompare(b.topic))[0]
+    if (!current) return null
+    return {
+      topic: {
+        selection: 'existing' as const,
+        value: { pattern: current.topic },
+      },
+      permission: current.permission,
+    }
+  },
 
   async ({ effects, input }) => {
     const { permission } = input

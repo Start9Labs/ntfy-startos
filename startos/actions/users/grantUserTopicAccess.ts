@@ -114,11 +114,8 @@ const inputSpec = InputSpec.of({
     description: i18n(
       'Level of access. "Deny" explicitly blocks — useful to revoke a previously granted permission or carve an exception out of a broader pattern.',
     ),
-    // The grant being edited depends on the topic chosen in this same form, so
-    // there is nothing to prefill from — the field always opens here. Say so,
-    // otherwise it reads as the stored grant having silently reverted.
     footnote: i18n(
-      'This always opens at the default and does not show the current grant. Nothing changes until you apply; the full grant list is shown afterwards.',
+      "Shows the selected user's grant on the selected topic as the form opened. It does not follow a change to the user or topic dropdowns; the full grant list is shown after you apply.",
     ),
     default: 'read-write',
     values: {
@@ -146,7 +143,32 @@ export const grantUserTopicAccess = sdk.Action.withInput(
 
   inputSpec,
 
-  async () => ({}),
+  // Open on the first user's first grant, so re-running the action shows a
+  // real stored pair rather than the declared defaults. The form renders once
+  // and does not re-read when the user or topic dropdown changes, so this is
+  // the opening state only; the grant list returned after applying is the
+  // authoritative view.
+  async ({ effects, prefill }) => {
+    if (prefill) return prefill
+    const users = (await listUsers()).filter(
+      (u) => u.role === 'user' && !u.username.startsWith('pkg_'),
+    )
+    if (users.length === 0) return null
+    users.sort((a, b) => a.username.localeCompare(b.username))
+    const username = users[0].username
+    const current = users[0].grants
+      .slice()
+      .sort((a, b) => a.topic.localeCompare(b.topic))[0]
+    if (!current) return { username }
+    return {
+      username,
+      topic: {
+        selection: 'existing' as const,
+        value: { pattern: current.topic },
+      },
+      permission: current.permission,
+    }
+  },
 
   async ({ effects, input }) => {
     const { username, permission } = input

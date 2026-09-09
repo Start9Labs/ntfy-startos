@@ -215,7 +215,7 @@ const dict = {
 
   // actions/public/enableUnifiedPush.ts (and shared permission footnote)
   '${topic} — anonymous: ${permission}': 206,
-  'This always opens at the default and does not show the current grant. Nothing changes until you apply; the full grant list is shown afterwards.': 207,
+  "Shows the selected user's grant on the selected topic as the form opened. It does not follow a change to the user or topic dropdowns; the full grant list is shown after you apply.": 207,
   'Enable UnifiedPush': 208,
   'Set up this server as a UnifiedPush distributor backend, so apps like Element (Matrix) can receive push notifications through it instead of Google FCM. Grants anonymous write-only access on "up*" — required because a Matrix homeserver pushes without credentials, as the protocol has no field to carry them — and creates a "unifiedpush" user with read-only access on the same pattern for the ntfy app to subscribe with. Re-run at any time to reissue the password; the grants are idempotent.': 209,
   'UnifiedPush Enabled': 210,
@@ -223,6 +223,7 @@ const dict = {
   'Server URL': 212,
   'Not set — run "Configure" first.': 213,
   'Topic Pattern': 214,
+  'Shows the anonymous grant on the topic selected above as the form opened. It does not follow a change to that dropdown — each option there is labelled with its own current permission.': 215,
 } as const
 
 /**
