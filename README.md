@@ -119,7 +119,7 @@ Running that task creates the `admin` user with a generated password, shows it o
 
 ## Actions
 
-Eleven actions in five groups, plus the hidden setup action.
+Twelve actions in five groups, plus the hidden setup action.
 
 ### Set Admin Password (hidden)
 
@@ -154,12 +154,28 @@ A pair for automation, and **both are callable by dependent packages** rather th
 - **Revoke Publisher** deletes such an account — grants and tokens cascade. Whatever was using those credentials stops publishing until it re-provisions.
 - **Repeat safety:** provisioning the same package id again re-mints; revoking one that is gone is an error, not a silent success.
 
-### Public Access — Set Anonymous Topic Access
+### Public Access — Set Anonymous Topic Access, Enable UnifiedPush
 
 Grants or denies unauthenticated access to a topic, which is how a topic becomes publicly readable or publicly writable.
 
 - **Cost:** seconds, and it is the deliberate way to reopen what `auth-default-access: deny-all` closed.
 - **Repeat safety:** idempotent per topic; the full list of anonymously-accessible topics is shown afterwards.
+- The existing-topic dropdown annotates each entry with the anonymous grant already in force, so current state is visible even though the permission field cannot show it.
+
+**Enable UnifiedPush** is the packaged form of the two grants a [UnifiedPush](https://unifiedpush.org) client needs on `up*`, plus the account that subscribes with them. It exists because the two halves are asymmetric in a way that is easy to get wrong and fails silently:
+
+| Party                                         | Identity      | Grant                 | Why                                                                                                                                                                                                 |
+| --------------------------------------------- | ------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The pushing server (e.g. a Matrix homeserver) | anonymous     | `write-only` on `up*` | The Matrix push protocol carries no credential field, so the POST arrives unauthenticated. Under `deny-all` it is rejected and nothing reaches the device, with no error anywhere the user can see. |
+| The ntfy app                                  | `unifiedpush` | `read-only` on `up*`  | The subscriber can authenticate, so read is not opened to the world.                                                                                                                                |
+
+The wildcard is deliberate: the ntfy app generates a fresh `up`-prefixed topic per app per device, and rotates it on reinstall. Exact-topic grants would break silently on every rotation.
+
+- **Cost:** seconds; no restart.
+- **Repeat safety:** re-running reissues the `unifiedpush` password and re-asserts both grants unchanged — the recovery path after a client reinstall.
+- **`base-url` is embedded at registration time.** Changing it afterwards invalidates every existing registration.
+
+Both actions prefill from `auth.db` when the form opens — Set Anonymous Topic Access on the first anonymous grant, Grant User Topic Access on the first user's first grant — so re-running an action shows what is actually stored rather than a declared default. The form renders once and does not re-read when a dropdown changes, so that pair is the opening state only; Set Anonymous Topic Access additionally labels every option in its topic dropdown with the anonymous permission on it, and the grant list returned after applying is the authoritative view.
 
 ### Monitoring — Server Stats, Server Metrics
 
@@ -203,6 +219,7 @@ Both volumes are copied wholesale — `sdk.Backups.ofVolumes('main', 'startos')`
 6. **A placeholder VAPID contact email is written at install** so ntfy will start; replace it via Configure if your push provider needs a real one.
 7. **Most management actions require the service to be running**, even though they work on the database rather than the API.
 8. **No riscv64 build.** x86_64 and aarch64 only.
+9. **UnifiedPush requires an anonymous write grant.** There is no way to authenticate the pushing server, so `up*` must be world-writable to publish. Topic names are long and random, and `behind-proxy: true` keeps ntfy's rate limiter keyed on real client IPs, but the grant is genuinely open.
 
 ---
 
@@ -240,6 +257,7 @@ actions:
   - provision-publisher # only-running; access: dependent
   - revoke-publisher # only-running; access: dependent
   - set-anonymous-topic-access # only-running
+  - enable-unified-push # only-running
   - server-stats # only-running
   - server-metrics # only-running
 tasks:
