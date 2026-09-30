@@ -161,6 +161,8 @@ Grants or denies unauthenticated access to a topic, which is how a topic becomes
 - **Cost:** seconds, and it is the deliberate way to reopen what `auth-default-access: deny-all` closed.
 - **Repeat safety:** idempotent per topic; the full list of anonymously-accessible topics is shown afterwards.
 
+UnifiedPush has no dedicated action: `instructions.md` walks the user through a user with read-only on `up*` plus anonymous write-only on `up*`, the grants ntfy's UnifiedPush setup expects.
+
 ### Monitoring — Server Stats, Server Metrics
 
 Read-only, only while running, and the two that go through the live server's API using the stored admin token — so both fail with a clear message if Set Admin Password was never run. Server Metrics returns the Prometheus endpoint's output: throughput, topic and subscriber counts, attachment storage, and delivery stats.

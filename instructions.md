@@ -25,6 +25,18 @@ NTFY posts a critical task right after install. Run it before anything else.
 
 Use the Web UI, the official Android or iOS apps, the `ntfy` CLI, or any HTTP client. Point each at the base URL you set above and authenticate with your admin password, a regular user's password, or an access token. Browser web push works as soon as you subscribe to a topic in the Web UI.
 
+### UnifiedPush (Element and other apps)
+
+NTFY can be the push backend for Android apps that support [UnifiedPush](https://unifiedpush.org), such as **Element**, instead of Google FCM. The ntfy app names every UnifiedPush topic `up` plus a random suffix, so access is granted on the pattern `up*`.
+
+1. Run **Create User** (for example `unifiedpush`) and copy the password.
+2. Run **Grant User Topic Access** for that user: choose **Enter New**, enter `up*`, and pick **Read Only**.
+3. Run **Set Anonymous Topic Access**: choose **Enter New**, enter `up*`, and pick **Write Only**. This lets the app's server deliver pushes without an account; it can't read them.
+4. In the ntfy app, set the default server to your **Base URL**, add the user under _Manage users_, and enable ntfy as a UnifiedPush distributor.
+5. Choose ntfy in the app's notification settings, then restart the app.
+
+Your **Base URL** must be reachable from the phone and from the server that sends the pushes — for Element, the homeserver your account is on. Clients embed it when they register, so if you change it later, re-select the distributor on each device.
+
 ### Actions
 
 #### General
