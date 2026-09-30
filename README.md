@@ -160,22 +160,13 @@ Grants or denies unauthenticated access to a topic, which is how a topic becomes
 
 - **Cost:** seconds, and it is the deliberate way to reopen what `auth-default-access: deny-all` closed.
 - **Repeat safety:** idempotent per topic; the full list of anonymously-accessible topics is shown afterwards.
-- The existing-topic dropdown annotates each entry with the anonymous grant already in force, so current state is visible even though the permission field cannot show it.
+- The existing-topic dropdown labels each topic with the anonymous permission already on it.
 
-**Enable UnifiedPush** is the packaged form of the two grants a [UnifiedPush](https://unifiedpush.org) client needs on `up*`, plus the account that subscribes with them. It exists because the two halves are asymmetric in a way that is easy to get wrong and fails silently:
-
-| Party                                         | Identity      | Grant                 | Why                                                                                                                                                                                                 |
-| --------------------------------------------- | ------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The pushing server (e.g. a Matrix homeserver) | anonymous     | `write-only` on `up*` | The Matrix push protocol carries no credential field, so the POST arrives unauthenticated. Under `deny-all` it is rejected and nothing reaches the device, with no error anywhere the user can see. |
-| The ntfy app                                  | `unifiedpush` | `read-only` on `up*`  | The subscriber can authenticate, so read is not opened to the world.                                                                                                                                |
-
-The wildcard is deliberate: the ntfy app generates a fresh `up`-prefixed topic per app per device, and rotates it on reinstall. Exact-topic grants would break silently on every rotation.
+**Enable UnifiedPush** sets up what a [UnifiedPush](https://unifiedpush.org) client needs: anonymous `write-only` on `up*`, because the pushing server (e.g. a Matrix homeserver) cannot authenticate, and a `unifiedpush` user with `read-only` on `up*` for the ntfy app to subscribe with. The ntfy app names its UnifiedPush topics `up` plus a random suffix, so the wildcard covers every app on every device.
 
 - **Cost:** seconds; no restart.
-- **Repeat safety:** re-running reissues the `unifiedpush` password and re-asserts both grants unchanged — the recovery path after a client reinstall.
+- **Repeat safety:** re-running re-applies both grants and leaves an existing `unifiedpush` password unchanged. Rotating it with Reset User Password signs out every device using it.
 - **`base-url` is embedded at registration time.** Changing it afterwards invalidates every existing registration.
-
-Both actions prefill from `auth.db` when the form opens — Set Anonymous Topic Access on the first anonymous grant, Grant User Topic Access on the first user's first grant — so re-running an action shows what is actually stored rather than a declared default. The form renders once and does not re-read when a dropdown changes, so that pair is the opening state only; Set Anonymous Topic Access additionally labels every option in its topic dropdown with the anonymous permission on it, and the grant list returned after applying is the authoritative view.
 
 ### Monitoring — Server Stats, Server Metrics
 
@@ -219,7 +210,7 @@ Both volumes are copied wholesale — `sdk.Backups.ofVolumes('main', 'startos')`
 6. **A placeholder VAPID contact email is written at install** so ntfy will start; replace it via Configure if your push provider needs a real one.
 7. **Most management actions require the service to be running**, even though they work on the database rather than the API.
 8. **No riscv64 build.** x86_64 and aarch64 only.
-9. **UnifiedPush requires an anonymous write grant.** There is no way to authenticate the pushing server, so `up*` must be world-writable to publish. Topic names are long and random, and `behind-proxy: true` keeps ntfy's rate limiter keyed on real client IPs, but the grant is genuinely open.
+9. **Enable UnifiedPush makes `up*` world-writable.** The pushing server cannot authenticate; the topic names are long and random, but anyone who learns one can publish to it.
 
 ---
 

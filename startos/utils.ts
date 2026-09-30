@@ -64,6 +64,9 @@ export const adminAuth = async (): Promise<{
   }
 }
 
+// ntfy's anonymous user; `ntfy access` also accepts the alias "everyone"
+export const EVERYONE = '*'
+
 export type NtfyPermission = 'read-write' | 'read-only' | 'write-only' | 'deny'
 
 export type NtfyUser = {
