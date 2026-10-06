@@ -152,6 +152,7 @@ A pair for automation, and **both are callable by dependent packages** rather th
 
 - **Provision Publisher** mints a `pkg_<id>` account with write-only access to one topic and returns a never-expiring token, along with the bridge URL to publish to. It exists so credentials handed to a script or another service carry no more authority than publishing to that one topic. Any regular user can publish too; this is for when you want the narrower grant.
 - **Revoke Publisher** deletes such an account — grants and tokens cascade. Whatever was using those credentials stops publishing until it re-provisions.
+- **A dependent acts only on its own account.** Run by another service, Provision rejects any Publisher ID but that service's package id, and Revoke any publisher but its `pkg_<id>`. Run by you, both take any id.
 - **Repeat safety:** provisioning the same package id again re-mints; revoking one that is gone is an error, not a silent success.
 
 ### Public Access — Set Anonymous Topic Access

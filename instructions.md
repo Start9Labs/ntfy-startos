@@ -57,6 +57,8 @@ A "publisher" here is a scoped, write-only automation account (`pkg_<id>`) for h
 - **Provision Publisher** — mint a publisher with write access to a single topic. Returns the publish URL, an access token, the topic, and the username — hand these to the caller.
 - **Revoke Publisher** — delete a provisioned publisher; its token and topic grant go with it.
 
+Another service on your server can run both actions too, but only for its own publisher.
+
 #### Public access
 
 - **Set Anonymous Topic Access** — grant or deny `read-write`, `read-only`, `write-only`, or `deny` on a topic for unauthenticated clients. Use this for public broadcast topics.

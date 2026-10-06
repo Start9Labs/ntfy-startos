@@ -41,7 +41,7 @@ const inputSpec = InputSpec.of({
     }
     return {
       name: i18n('User'),
-      description: i18n('The user whose password will be reset.'),
+      description: null,
       default: selectable[0].username,
       values,
     }

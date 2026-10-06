@@ -18,18 +18,23 @@ Freshly scaffolded? Work the
 guide page, not a file in this repo — read it, don't copy it in.
 
 Keep `README.md` (technical reference for an AI support or administering agent) and
-`instructions.md` (end-user docs) in sync with your changes.
+`instructions.md` (end-user docs) in sync with your changes. This file restates neither:
+whoever changes the package has both, so it carries only what they don't — repo mechanics,
+a change that looks right and is not, where the next thing gets added, a naming trap, a
+build or test invocation particular to this repo.
 
-**Bugs and feature requests are GitHub issues on this repo** — file them as you find them.
+**Fix a defect you spot rather than reporting it** — you have the package open and the
+context to be sure. File **a GitHub issue on this repo** only when the call isn't yours to
+make: you can't pin the cause down, two defensible fixes exist, or it's too large to ride on
+the work in hand. An open issue is a report, not a queue — implement one when you're asked
+to or when it's labelled `Approved`, then close it with `Closes #<n>`.
+
 Don't record work in the repo instead: no `TODO.md`, no `NOTES.md`, no `PLAN.md`. What you
 verified, tried, and decided belongs in the commit message and the PR body.
 
 ## This repo
 
-- **`ntfy user add` refuses a non-existent auth file, so setup must `touch` it first.** A zero-byte file passes the stat check and ntfy's SQLite manager runs its `CREATE TABLE` migrations on first open — that `touch` is why Set Admin Password works on a fresh volume.
-- **The admin token, not the admin password, is what the package keeps.** Tokens survive password changes, so the monitoring actions keep working after a rotation. Never store the password.
-- **`behind-proxy: true` is load-bearing for rate limiting**, not cosmetic: StartOS terminates TLS in front of ntfy, so without it every client presents as the proxy's single IP.
-- **Install must fail if the mDNS address does not resolve.** A server with no `base-url` silently breaks attachment links and web push; better to refuse the install.
-- **`web-push-email-address` is seeded with a placeholder because ntfy refuses to start on a partial web-push config.** Don't remove the default in favour of leaving it unset.
-- **Provision/Revoke Publisher carry `access: 'dependent'` deliberately** — other packages call them via `effects.action.run` to mint and tear down their own scoped credentials. Changing their ids or input shapes breaks those callers.
-- **The publish URL handed to a dependent is the bridge address**, resolved from the interface's own host, not the retired `ntfy.startos` name.
+- **Set Admin Password must `touch` the auth file before `ntfy user add`**, which refuses a missing file; a zero-byte one passes and ntfy creates its tables on first open.
+- **Keep the admin token, never the admin password.** The monitoring actions authenticate with the token, which survives password rotation.
+- **Provision/Revoke Publisher are an API to dependents (canary today).** Don't change their ids, input shapes, or the order of Provision's result members, which canary reads by position; and keep the account tied to `caller`, never to the input.
+- **canary imports `uiHostId` and `uiInterfaceId` from `startos/utils.ts`** — renaming or moving them breaks its build.

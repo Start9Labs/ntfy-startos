@@ -81,7 +81,9 @@ const inputSpec = InputSpec.of({
   }),
   attachmentFileSizeLimit: Value.number({
     name: i18n('Max Attachment File Size'),
-    description: i18n('Maximum size of a single uploaded file attachment.'),
+    description: i18n(
+      'Larger attachments are rejected when published. Cannot be more than the total attachment storage limit.',
+    ),
     required: false,
     default: null,
     min: 1,
@@ -165,7 +167,7 @@ const inputSpec = InputSpec.of({
   logLevel: Value.select({
     name: i18n('Log Level'),
     description: i18n(
-      'Verbosity of NTFY server logs. Use "debug" or "trace" for troubleshooting.',
+      '- Trace: every internal step; very noisy, only while chasing a specific problem\n- Debug: detail on each request, for troubleshooting\n- Info: startup and notable events; right for everyday use\n- Warn: only problems that may need attention\n- Error: only failures',
     ),
     default: 'info',
     values: {

@@ -35,7 +35,7 @@ const inputSpec = InputSpec.of({
   topic: Value.text({
     name: i18n('Topic'),
     description: i18n(
-      'The topic the service will publish to. Wildcards supported.',
+      'The publisher gets write-only access to this topic and nothing else. A wildcard such as alerts_* covers every matching topic.',
     ),
     required: true,
     default: null,
@@ -60,7 +60,7 @@ export const provisionPublisher = sdk.Action.withInput(
   async ({ effects }) => ({
     name: i18n('Provision Publisher'),
     description: i18n(
-      'Mint a scoped, write-only automation account for a service or external tool that publishes to NTFY (a StartOS package, a cron script, etc.). Any regular user can publish too; use this when you want a dedicated account that only has permission to publish to one topic, so the credentials can be handed to automation without granting broader access. Creates a `pkg_<id>` user, grants write-only access to the chosen topic, and returns a never-expiring token. Tear down with "Revoke Publisher".',
+      'Mint a scoped, write-only automation account for a service or external tool that publishes to NTFY (a StartOS package, a cron script, etc.). Any regular user can publish too; use this when you want a dedicated account that only has permission to publish to one topic, so the credentials can be handed to automation without granting broader access. Creates a user named pkg_<id>, grants write-only access to the chosen topic, and returns a never-expiring token. Tear down with "Revoke Publisher".',
     ),
     warning: null,
     allowedStatuses: 'only-running',
@@ -75,8 +75,15 @@ export const provisionPublisher = sdk.Action.withInput(
 
   async () => ({}),
 
-  async ({ effects, input }) => {
+  async ({ effects, input, caller }) => {
     const { packageId, topic } = input
+    if (caller !== null && packageId !== caller) {
+      throw new Error(
+        i18n('A service can only provision its own publisher, "${caller}".', {
+          caller,
+        }),
+      )
+    }
     const username = `pkg_${packageId}`
     const label = `startos:${packageId}`
 

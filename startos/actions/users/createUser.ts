@@ -7,9 +7,7 @@ const { InputSpec, Value } = sdk
 const inputSpec = InputSpec.of({
   username: Value.text({
     name: i18n('Username'),
-    description: i18n(
-      'The username for the new account. Lowercase letters, digits, underscores, and hyphens only.',
-    ),
+    description: null,
     required: true,
     default: null,
     placeholder: i18n('e.g. alice'),

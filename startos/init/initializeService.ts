@@ -1,5 +1,6 @@
 import { setAdminPassword } from '../actions/setAdminPassword'
 import { settingsYaml } from '../fileModels/settings.yaml'
+import { i18n } from '../i18n'
 import { sdk } from '../sdk'
 import { uiHostId, uiInterfaceId, withMainSub } from '../utils'
 
@@ -45,6 +46,6 @@ export const initializeService = sdk.setupOnInit(async (effects, kind) => {
   })
 
   await sdk.action.createOwnTask(effects, setAdminPassword, 'critical', {
-    reason: 'Generate your NTFY admin password',
+    reason: i18n('Generate your NTFY admin password'),
   })
 })

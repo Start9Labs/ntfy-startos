@@ -16,7 +16,7 @@ const inputSpec = InputSpec.of({
   topic: Value.union({
     name: i18n('Topic'),
     description: i18n(
-      'Topic pattern to set anonymous access on. Wildcards are supported — e.g. "public_*" matches all topics beginning with "public_".',
+      '- Choose Existing: a topic or pattern that already has a grant\n- Enter New: any topic or pattern; * is a wildcard, so public_* matches every topic beginning with public_',
     ),
     default: 'existing',
     variants: Variants.of({
@@ -81,7 +81,7 @@ const inputSpec = InputSpec.of({
   permission: Value.select({
     name: i18n('Permission'),
     description: i18n(
-      'Level of anonymous access. "Deny" explicitly blocks — useful to carve an exception out of a broader public wildcard grant.',
+      '- Read & Write: anyone can subscribe to the topic and publish to it\n- Read Only: anyone can subscribe; publishing needs a user with access\n- Write Only: anyone can publish; subscribing needs a user with access\n- Deny: no anonymous access, even where a broader wildcard grant allows it',
     ),
     default: 'read-only',
     values: {

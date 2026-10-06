@@ -30,7 +30,7 @@ const inputSpec = InputSpec.of({
     }
     return {
       name: i18n('Publisher'),
-      description: i18n('The provisioned publisher to deprovision.'),
+      description: null,
       default: publishers[0].username,
       values,
     }
@@ -43,7 +43,7 @@ export const revokePublisher = sdk.Action.withInput(
   async ({ effects }) => ({
     name: i18n('Revoke Publisher'),
     description: i18n(
-      'Delete a provisioned automation account (a `pkg_*` user created via Provision Publisher) — its topic grants and all its tokens cascade. The service or script using those credentials will stop publishing until it re-provisions. Does not affect regular users who can publish to topics via their own grants.',
+      'Delete a provisioned automation account (a pkg_* user created via Provision Publisher) — its topic grants and all its tokens cascade. The service or script using those credentials will stop publishing until it re-provisions. Does not affect regular users who can publish to topics via their own grants.',
     ),
     warning: null,
     allowedStatuses: 'only-running',
@@ -59,8 +59,15 @@ export const revokePublisher = sdk.Action.withInput(
 
   async () => ({}),
 
-  async ({ effects, input }) => {
+  async ({ effects, input, caller }) => {
     const { username } = input
+    if (caller !== null && username !== `${PKG_PREFIX}${caller}`) {
+      throw new Error(
+        i18n('A service can only revoke its own publisher, "${caller}".', {
+          caller,
+        }),
+      )
+    }
     if (username === '_none') {
       throw new Error(i18n('No provisioned publishers available.'))
     }
