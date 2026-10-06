@@ -15,7 +15,7 @@ const inputSpec = InputSpec.of({
   packageId: Value.text({
     name: i18n('Publisher ID'),
     description: i18n(
-      'A stable identifier for the publisher — typically a StartOS package ID (e.g. "uptime-kuma") for wired-up services, or any descriptive slug for external tools (e.g. "my-cron", "home-assistant-ext"). Becomes the ntfy username "pkg_<id>".',
+      'A stable identifier for the publisher — typically a StartOS package ID (e.g. "uptime-kuma") for wired-up services, or any descriptive slug for external tools (e.g. "my-cron", "home-assistant-ext"). Becomes the ntfy username "pkg_{id}".',
     ),
     required: true,
     default: null,
@@ -60,7 +60,7 @@ export const provisionPublisher = sdk.Action.withInput(
   async ({ effects }) => ({
     name: i18n('Provision Publisher'),
     description: i18n(
-      'Mint a scoped, write-only automation account for a service or external tool that publishes to NTFY (a StartOS package, a cron script, etc.). Any regular user can publish too; use this when you want a dedicated account that only has permission to publish to one topic, so the credentials can be handed to automation without granting broader access. Creates a user named pkg_<id>, grants write-only access to the chosen topic, and returns a never-expiring token. Tear down with "Revoke Publisher".',
+      'Mint a scoped, write-only automation account for a service or external tool that publishes to NTFY (a StartOS package, a cron script, etc.). Any regular user can publish too; use this when you want a dedicated account that only has permission to publish to one topic, so the credentials can be handed to automation without granting broader access. Creates a user named pkg_{id}, grants write-only access to the chosen topic, and returns a never-expiring token. Tear down with "Revoke Publisher".',
     ),
     warning: null,
     allowedStatuses: 'only-running',

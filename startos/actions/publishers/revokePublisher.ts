@@ -51,7 +51,7 @@ export const revokePublisher = sdk.Action.withInput(
     visibility: 'enabled',
     // Symmetric with Provision Publisher: a dependent that provisioned an
     // account calls this via `effects.action.run` to tear it down (e.g. on
-    // uninstall), passing its own `pkg_<id>` username directly.
+    // uninstall), passing its own `pkg_{id}` username directly.
     access: 'dependent',
   }),
 

@@ -1,3 +1,4 @@
+import { primaryUrl } from '../primaryUrl'
 import { sdk } from '../sdk'
 import { configure } from './configure'
 import { serverMetrics } from './monitoring/serverMetrics'
@@ -14,6 +15,7 @@ import { resetUserPassword } from './users/resetUserPassword'
 export const actions = sdk.Actions.of()
   .addAction(setAdminPassword)
   .addAction(configure)
+  .addAction(primaryUrl.action)
   .addAction(createUser)
   .addAction(resetUserPassword)
   .addAction(deleteUser)

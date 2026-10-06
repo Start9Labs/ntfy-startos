@@ -101,9 +101,9 @@ const inputSpec = InputSpec.of({
         }),
       },
       personal: {
-        name: i18n('Personal Namespace (<username>_*)'),
+        name: i18n('Personal Namespace ({username}_*)'),
         description: i18n(
-          'Shortcut: grants access to the pattern "<username>_*" — any topic prefixed with the selected username followed by an underscore (e.g. alice_alerts, alice_reminders).',
+          'Shortcut: grants access to the pattern "{username}_*" — any topic prefixed with the selected username followed by an underscore (e.g. alice_alerts, alice_reminders).',
         ),
         spec: InputSpec.of({}),
       },

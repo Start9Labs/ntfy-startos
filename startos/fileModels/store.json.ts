@@ -3,6 +3,7 @@ import { sdk } from '../sdk'
 
 const shape = z.looseObject({
   adminToken: z.string().optional().catch(undefined),
+  primaryUrl: z.string().nullable().catch(null),
 })
 
 export const storeJson = FileHelper.json(

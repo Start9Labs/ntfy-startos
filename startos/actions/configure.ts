@@ -1,76 +1,10 @@
 import { settingsYaml } from '../fileModels/settings.yaml'
 import { i18n } from '../i18n'
 import { sdk } from '../sdk'
-import { uiHostId, uiInterfaceId } from '../utils'
 
 const { InputSpec, Value } = sdk
 
 const inputSpec = InputSpec.of({
-  baseUrl: Value.dynamicSelect(async ({ effects }) => {
-    const addressInfo = await sdk.host
-      .getOwn(effects, uiHostId, (host) => {
-        const iface =
-          host &&
-          Object.values(host.bindings)
-            .flatMap((b) => Object.values(b.interfaces))
-            .find((i) => i.id === uiInterfaceId)
-        return iface?.addressInfo ?? null
-      })
-      .once()
-
-    if (!addressInfo) {
-      return {
-        name: i18n('Base URL'),
-        warning: i18n(
-          'No addresses available yet. Try again after the service has started.',
-        ),
-        default: '_none',
-        values: { _none: i18n('No addresses available') } as Record<
-          string,
-          string
-        >,
-        disabled: ['_none'],
-      }
-    }
-
-    // StartOS terminates TLS at its reverse proxy — force https:// on every
-    // URL so the UI (loaded over https) doesn't mixed-content-block its own
-    // fetches to base-url.
-    const toHttps = (u: string) => u.replace(/^http:\/\//, 'https://')
-    const values: Record<string, string> = {}
-    const hostnames = addressInfo.nonLocal.format('hostname-info')
-    for (const h of hostnames) {
-      const url = toHttps(addressInfo.nonLocal.toUrl(h))
-      values[url] = url
-    }
-
-    if (Object.keys(values).length === 0) {
-      return {
-        name: i18n('Base URL'),
-        warning: i18n('No non-local addresses found.'),
-        default: '_none',
-        values: { _none: i18n('No addresses available') } as Record<
-          string,
-          string
-        >,
-        disabled: ['_none'],
-      }
-    }
-
-    const mdnsHost = hostnames.find((h) => h.metadata.kind === 'mdns')
-    const defaultUrl = mdnsHost
-      ? toHttps(addressInfo.nonLocal.toUrl(mdnsHost))
-      : Object.keys(values)[0]
-
-    return {
-      name: i18n('Base URL'),
-      description: i18n(
-        'Public URL of this NTFY server, embedded in attachment download links and web push notifications. Required for attachments and web push to work.',
-      ),
-      default: defaultUrl,
-      values,
-    }
-  }),
   enableSignup: Value.triState({
     name: i18n('Allow Self-Registration'),
     description: i18n(
@@ -200,7 +134,6 @@ export const configure = sdk.Action.withInput(
   async ({ effects }) => {
     const s = await settingsYaml.read((s) => s).once()
     return {
-      baseUrl: s?.['base-url'] ?? undefined,
       enableSignup: s?.['enable-signup'] ?? null,
       attachmentFileSizeLimit: parseMegabytes(
         s?.['attachment-file-size-limit'],
@@ -221,13 +154,6 @@ export const configure = sdk.Action.withInput(
   },
 
   async ({ effects, input }) => {
-    if (input.baseUrl === '_none') {
-      throw new Error(
-        i18n(
-          'No addresses available. Please try again after the service has started.',
-        ),
-      )
-    }
     if (
       input.attachmentFileSizeLimit != null &&
       input.attachmentTotalSizeLimit != null &&
@@ -260,7 +186,6 @@ export const configure = sdk.Action.withInput(
     }
 
     await settingsYaml.merge(effects, {
-      'base-url': input.baseUrl,
       'enable-signup': input.enableSignup ?? undefined,
       'attachment-file-size-limit': formatMegabytes(
         input.attachmentFileSizeLimit,

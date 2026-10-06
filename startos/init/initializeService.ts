@@ -2,26 +2,12 @@ import { setAdminPassword } from '../actions/setAdminPassword'
 import { settingsYaml } from '../fileModels/settings.yaml'
 import { i18n } from '../i18n'
 import { sdk } from '../sdk'
-import { uiHostId, uiInterfaceId, withMainSub } from '../utils'
+import { withMainSub } from '../utils'
 
 export const initializeService = sdk.setupOnInit(async (effects, kind) => {
   if (kind !== 'install') {
     await settingsYaml.merge(effects, {})
     return
-  }
-
-  const mdnsUrl = await sdk.host
-    .getOwn(effects, uiHostId, (host) => {
-      const iface =
-        host &&
-        Object.values(host.bindings)
-          .flatMap((b) => Object.values(b.interfaces))
-          .find((i) => i.id === uiInterfaceId)
-      return iface?.addressInfo.filter({ kind: 'mdns' }).format()[0] ?? null
-    })
-    .once()
-  if (!mdnsUrl) {
-    throw new Error('NTFY: Could not resolve mDNS address for base-url.')
   }
 
   const keysOut = await withMainSub(
@@ -40,7 +26,6 @@ export const initializeService = sdk.setupOnInit(async (effects, kind) => {
   }
 
   await settingsYaml.merge(effects, {
-    'base-url': mdnsUrl,
     'web-push-public-key': pubMatch[1],
     'web-push-private-key': privMatch[1],
   })
