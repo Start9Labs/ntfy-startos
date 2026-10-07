@@ -204,7 +204,7 @@ This is ntfy's own health endpoint rather than a port probe, so it reports the s
 Both volumes are copied wholesale — `sdk.Backups.ofVolumes('main', 'startos')`. No dump step and nothing excluded.
 
 - **Included:** `settings.yaml` with the VAPID keypair, `auth.db` with every user, token, and grant, retained messages, browser push subscriptions, uploaded attachments, and the admin token in `store.json`.
-- **Restore:** complete, and no task is raised — the admin account and its token come back with everything else.
+- **Restore:** complete, and no admin setup task is raised — the admin account and its token come back with everything else.
 - **`base-url` follows the restored server's addresses.** If the chosen URL is not one of them, ntfy uses the preferred HTTPS address and the Set Base URL task asks for a new choice.
 
 ## Limitations and Differences

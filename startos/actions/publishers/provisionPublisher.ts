@@ -35,7 +35,7 @@ const inputSpec = InputSpec.of({
   topic: Value.text({
     name: i18n('Topic'),
     description: i18n(
-      'The publisher gets write-only access to this topic and nothing else. A wildcard such as alerts_* covers every matching topic.',
+      'Grants write-only access to this topic. A wildcard such as alerts_* covers every matching topic. Re-provisioning keeps existing topic grants and tokens; revoke the publisher first to remove them.',
     ),
     required: true,
     default: null,

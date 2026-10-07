@@ -121,7 +121,7 @@ const dict = {
   'A stable identifier for the publisher — typically a StartOS package ID (e.g. "uptime-kuma") for wired-up services, or any descriptive slug for external tools (e.g. "my-cron", "home-assistant-ext"). Becomes the ntfy username "pkg_{id}".': 117,
   'e.g. uptime-kuma': 118,
   'Publisher ID must be lowercase alphanumeric with hyphens only.': 119,
-  'The publisher gets write-only access to this topic and nothing else. A wildcard such as alerts_* covers every matching topic.': 120,
+  'Grants write-only access to this topic. A wildcard such as alerts_* covers every matching topic. Re-provisioning keeps existing topic grants and tokens; revoke the publisher first to remove them.': 120,
   'e.g. uptime-kuma_myserver': 121,
   'Provision Publisher': 122,
   'Mint a scoped, write-only automation account for a service or external tool that publishes to NTFY (a StartOS package, a cron script, etc.). Any regular user can publish too; use this when you want a dedicated account that only has permission to publish to one topic, so the credentials can be handed to automation without granting broader access. Creates a user named pkg_{id}, grants write-only access to the chosen topic, and returns a never-expiring token. Tear down with "Revoke Publisher".': 123,
