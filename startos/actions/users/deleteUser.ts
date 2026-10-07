@@ -24,7 +24,7 @@ const inputSpec = InputSpec.of({
     for (const u of regular) values[u.username] = u.username
     return {
       name: i18n('User'),
-      description: i18n('The user to permanently delete.'),
+      description: null,
       default: regular[0].username,
       values,
     }

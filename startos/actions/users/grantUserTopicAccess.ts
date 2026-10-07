@@ -40,7 +40,7 @@ const inputSpec = InputSpec.of({
   topic: Value.union({
     name: i18n('Topic'),
     description: i18n(
-      'Topic pattern to set access for. Wildcards are supported — e.g. "alerts_*" matches all topics beginning with "alerts_".',
+      "- Choose Existing: a topic or pattern that already has a grant\n- Enter New: any topic or pattern; * is a wildcard, so alerts_* matches every topic beginning with alerts_\n- Personal Namespace: every topic beginning with the user's name and an underscore",
     ),
     default: 'existing',
     variants: Variants.of({
@@ -101,9 +101,9 @@ const inputSpec = InputSpec.of({
         }),
       },
       personal: {
-        name: i18n('Personal Namespace (<username>_*)'),
+        name: i18n('Personal Namespace ({username}_*)'),
         description: i18n(
-          'Shortcut: grants access to the pattern "<username>_*" — any topic prefixed with the selected username followed by an underscore (e.g. alice_alerts, alice_reminders).',
+          'Shortcut: grants access to the pattern "{username}_*" — any topic prefixed with the selected username followed by an underscore (e.g. alice_alerts, alice_reminders).',
         ),
         spec: InputSpec.of({}),
       },
@@ -112,7 +112,7 @@ const inputSpec = InputSpec.of({
   permission: Value.select({
     name: i18n('Permission'),
     description: i18n(
-      'Level of access. "Deny" explicitly blocks — useful to revoke a previously granted permission or carve an exception out of a broader pattern.',
+      '- Read & Write: subscribe and publish\n- Read Only: subscribe only\n- Write Only: publish only\n- Deny: no access, even where a broader pattern grants it',
     ),
     default: 'read-write',
     values: {

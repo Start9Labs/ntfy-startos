@@ -13,11 +13,11 @@
 
 ## Getting set up
 
-NTFY posts a critical task right after install. Run it before anything else.
+NTFY posts two tasks right after install. Run the critical one before anything else.
 
 1. Run the **Set Admin Password** critical task. An `admin` user is created and an auto-generated password is shown once — copy it before dismissing the dialog. To rotate the password later, use **Reset User Password** and pick `admin`.
 2. Open the **Web UI** interface and log in as `admin` with that password.
-3. Run **Configure** and set **Base URL** to the address you want embedded in attachment download links and web push notifications. The default is your server's `.local` mDNS URL, which works on the LAN; pick a StartTunnel or Tor address if you need attachments and tap-to-open push to work off-LAN. Only one base URL at a time — pick the one your users actually reach the server at.
+3. Run the **Set Base URL** task and choose the address you want in attachment download links and web push notifications. It offers only HTTPS addresses and pre-selects a public domain if you have one, else your server's `.local` address, which works on the LAN only. Only one base URL at a time — pick the one your users actually reach the server at, and subscribe to web push from that address: browsers that subscribed from another address don't receive pushes.
 
 ## Using NTFY
 
@@ -41,7 +41,8 @@ Your **Base URL** must be reachable from the phone and from the server that send
 
 #### General
 
-- **Configure** — base URL, self-registration on/off, per-file and total attachment size limits, per-user attachment quota, per-user daily bandwidth, message cache retention, VAPID contact email, and log level. The service restarts to apply.
+- **Configure** — self-registration on/off, per-file and total attachment size limits, per-user attachment quota, per-user daily bandwidth, message cache retention, VAPID contact email, and log level. The service restarts to apply.
+- **Set Base URL** — the address NTFY puts in attachment links and web push notifications. If that address goes away, NTFY uses another HTTPS address until it returns, and a task asks you to choose again. The service restarts to apply.
 
 #### Users
 
@@ -56,6 +57,8 @@ A "publisher" here is a scoped, write-only automation account (`pkg_<id>`) for h
 
 - **Provision Publisher** — mint a publisher with write access to a single topic. Returns the publish URL, an access token, the topic, and the username — hand these to the caller.
 - **Revoke Publisher** — delete a provisioned publisher; its token and topic grant go with it.
+
+Another service on your server can run both actions too, but only for its own publisher.
 
 #### Public access
 
