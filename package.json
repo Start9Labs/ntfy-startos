@@ -1,8 +1,5 @@
 {
   "name": "ntfy-startos",
-  "scripts": {
-    "check": "tsc --noEmit"
-  },
   "dependencies": {
     "@start9labs/start-sdk": "3.0.4"
   },
