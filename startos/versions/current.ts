@@ -1,53 +1,48 @@
 import { VersionInfo, IMPOSSIBLE } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '2.29.0:0',
+  version: '2.30.0:0',
   releaseNotes: {
-    en_US: `Updated ntfy to 2.29.0.
+    en_US: `Updated ntfy to 2.30.0.
 
-- Delayed notifications support named time zones and RFC 3339 timestamps. The web app uses your browser's time zone when scheduling messages.
-- Cache writes are faster during publish bursts, reducing stalled publishes and messages missed by poll requests.
-- Accepted messages are flushed to the cache during graceful shutdown instead of being lost.
-- Fixes a crash when updating account tokens and improves Markdown detection.
-- Updated start-sdk to 3.0.4.
+- Fixes duplicate messages in the web app when message updates arrive through background polling.
+- Fixes CLI file uploads with multiline messages or titles.
+- Email notifications include attachment links, filenames, and expiry times; outgoing email supports SMTP LOGIN authentication.
+- Updated start-sdk to 3.0.6.
 
-Full release notes: https://github.com/binwiederhier/ntfy/releases/tag/v2.29.0`,
-    es_ES: `Actualiza ntfy a 2.29.0.
+Full release notes: https://github.com/binwiederhier/ntfy/blob/v2.30.0/docs/releases.md#ntfy-server-v2300`,
+    es_ES: `Actualiza ntfy a 2.30.0.
 
-- Las notificaciones programadas admiten zonas horarias con nombre y marcas de tiempo RFC 3339. La aplicación web usa la zona horaria de tu navegador al programar mensajes.
-- Las escrituras en caché son más rápidas durante las ráfagas de publicaciones, reduciendo los bloqueos al publicar y los mensajes omitidos por las peticiones de sondeo.
-- Los mensajes aceptados se guardan en la caché durante el apagado ordenado en lugar de perderse.
-- Corrige un fallo al actualizar los tokens de cuenta y mejora la detección de Markdown.
-- Actualiza start-sdk a 3.0.4.
+- Corrige los mensajes duplicados en la aplicación web cuando las actualizaciones llegan mediante el sondeo en segundo plano.
+- Corrige la subida de archivos desde la CLI con mensajes o títulos de varias líneas.
+- Las notificaciones por correo incluyen enlaces a adjuntos, nombres de archivo y fechas de caducidad; el correo saliente admite autenticación SMTP LOGIN.
+- Actualiza start-sdk a 3.0.6.
 
-Notas de la versión completas: https://github.com/binwiederhier/ntfy/releases/tag/v2.29.0`,
-    de_DE: `Aktualisiert ntfy auf 2.29.0.
+Notas de la versión completas: https://github.com/binwiederhier/ntfy/blob/v2.30.0/docs/releases.md#ntfy-server-v2300`,
+    de_DE: `Aktualisiert ntfy auf 2.30.0.
 
-- Geplante Benachrichtigungen unterstützen benannte Zeitzonen und RFC-3339-Zeitstempel. Die Web-App verwendet beim Planen die Zeitzone deines Browsers.
-- Cache-Schreibvorgänge sind bei Veröffentlichungsspitzen schneller; Veröffentlichungen stocken seltener und Poll-Anfragen verpassen weniger Nachrichten.
-- Angenommene Nachrichten werden beim geordneten Herunterfahren in den Cache geschrieben, statt verloren zu gehen.
-- Behebt einen Absturz beim Aktualisieren von Konto-Tokens und verbessert die Markdown-Erkennung.
-- Aktualisiert start-sdk auf 3.0.4.
+- Behebt doppelte Nachrichten in der Web-App, wenn Nachrichtenaktualisierungen über Hintergrundabfragen eintreffen.
+- Behebt Datei-Uploads über die CLI mit mehrzeiligen Nachrichten oder Titeln.
+- E-Mail-Benachrichtigungen enthalten Anhang-Links, Dateinamen und Ablaufzeiten; ausgehende E-Mails unterstützen SMTP-LOGIN-Authentifizierung.
+- Aktualisiert start-sdk auf 3.0.6.
 
-Vollständige Versionshinweise: https://github.com/binwiederhier/ntfy/releases/tag/v2.29.0`,
-    pl_PL: `Aktualizuje ntfy do 2.29.0.
+Vollständige Versionshinweise: https://github.com/binwiederhier/ntfy/blob/v2.30.0/docs/releases.md#ntfy-server-v2300`,
+    pl_PL: `Aktualizuje ntfy do 2.30.0.
 
-- Zaplanowane powiadomienia obsługują nazwane strefy czasowe i znaczniki czasu RFC 3339. Aplikacja internetowa używa strefy czasowej przeglądarki podczas planowania wiadomości.
-- Zapis do pamięci podręcznej jest szybszy podczas serii publikacji, ograniczając blokowanie publikacji i pomijanie wiadomości przez żądania odpytywania.
-- Przyjęte wiadomości są zapisywane w pamięci podręcznej podczas prawidłowego zamykania serwera zamiast ginąć.
-- Naprawia awarię podczas aktualizacji tokenów konta i poprawia wykrywanie Markdown.
-- Aktualizuje start-sdk do 3.0.4.
+- Naprawia duplikaty wiadomości w aplikacji internetowej, gdy aktualizacje wiadomości docierają przez odpytywanie w tle.
+- Naprawia przesyłanie plików przez CLI z wielowierszowymi wiadomościami lub tytułami.
+- Powiadomienia e-mail zawierają odnośniki do załączników, nazwy plików i terminy wygaśnięcia; poczta wychodząca obsługuje uwierzytelnianie SMTP LOGIN.
+- Aktualizuje start-sdk do 3.0.6.
 
-Pełne informacje o wydaniu: https://github.com/binwiederhier/ntfy/releases/tag/v2.29.0`,
-    fr_FR: `Met à jour ntfy vers 2.29.0.
+Pełne informacje o wydaniu: https://github.com/binwiederhier/ntfy/blob/v2.30.0/docs/releases.md#ntfy-server-v2300`,
+    fr_FR: `Met à jour ntfy vers 2.30.0.
 
-- Les notifications programmées prennent en charge les fuseaux horaires nommés et les horodatages RFC 3339. L'application web utilise le fuseau horaire de votre navigateur pour programmer les messages.
-- Les écritures en cache sont plus rapides lors des rafales de publications, réduisant les blocages et les messages manqués par les requêtes d'interrogation.
-- Les messages acceptés sont écrits dans le cache lors d'un arrêt propre au lieu d'être perdus.
-- Corrige un plantage lors de la mise à jour des jetons de compte et améliore la détection de Markdown.
-- Met à jour start-sdk vers 3.0.4.
+- Corrige les messages en double dans l'application web lorsque leurs mises à jour arrivent par interrogation en arrière-plan.
+- Corrige l'envoi de fichiers par la CLI avec des messages ou des titres sur plusieurs lignes.
+- Les notifications par e-mail incluent les liens vers les pièces jointes, leurs noms et leurs dates d'expiration ; les e-mails sortants prennent en charge l'authentification SMTP LOGIN.
+- Met à jour start-sdk vers 3.0.6.
 
-Notes de version complètes : https://github.com/binwiederhier/ntfy/releases/tag/v2.29.0`,
+Notes de version complètes : https://github.com/binwiederhier/ntfy/blob/v2.30.0/docs/releases.md#ntfy-server-v2300`,
   },
   migrations: {
     up: async () => {},

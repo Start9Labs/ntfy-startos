@@ -100,6 +100,7 @@ export const serverStats = sdk.Action.withoutInput(
       masked: false,
       copyable,
       qr: false,
+      launchable: null,
     })
 
     const rate =
