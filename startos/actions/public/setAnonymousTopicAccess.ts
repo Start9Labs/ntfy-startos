@@ -191,6 +191,7 @@ export const setAnonymousTopicAccess = sdk.Action.withInput(
               masked: false,
               copyable: false,
               qr: false,
+              launchable: null,
             })),
           },
         ],

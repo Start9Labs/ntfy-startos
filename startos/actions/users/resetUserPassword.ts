@@ -107,6 +107,7 @@ export const resetUserPassword = sdk.Action.withInput(
             masked: false,
             copyable: true,
             qr: false,
+            launchable: null,
           },
           {
             type: 'single',
@@ -116,6 +117,7 @@ export const resetUserPassword = sdk.Action.withInput(
             masked: true,
             copyable: true,
             qr: false,
+            launchable: null,
           },
         ],
       },

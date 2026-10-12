@@ -56,6 +56,7 @@ export const serverMetrics = sdk.Action.withoutInput(
       masked: false,
       copyable: false,
       qr: false,
+      launchable: null,
     })
 
     return {
