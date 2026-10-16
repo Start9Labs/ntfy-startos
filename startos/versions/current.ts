@@ -1,48 +1,43 @@
 import { VersionInfo, IMPOSSIBLE } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '2.30.0:0',
+  version: '2.31.0:0',
   releaseNotes: {
-    en_US: `Updated ntfy to 2.30.0.
+    en_US: `Updated ntfy to 2.31.0.
 
-- Fixes duplicate messages in the web app when message updates arrive through background polling.
-- Fixes CLI file uploads with multiline messages or titles.
-- Email notifications include attachment links, filenames, and expiry times; outgoing email supports SMTP LOGIN authentication.
-- Updated start-sdk to 3.0.6.
+- Recovers messages missed when a client reconnects during publishing by checking newly cached messages every second.
+- Fixes account usage statistics when an account takes over an anonymous visitor's connection.
+- Custom scripts using \`since=<message ID>\` may now receive duplicate messages from the same second. Deduplicate by message ID; the official apps and web app already do this.
 
-Full release notes: https://github.com/binwiederhier/ntfy/blob/v2.30.0/docs/releases.md#ntfy-server-v2300`,
-    es_ES: `Actualiza ntfy a 2.30.0.
+Full release notes: https://github.com/binwiederhier/ntfy/releases/tag/v2.31.0`,
+    es_ES: `Actualiza ntfy a 2.31.0.
 
-- Corrige los mensajes duplicados en la aplicación web cuando las actualizaciones llegan mediante el sondeo en segundo plano.
-- Corrige la subida de archivos desde la CLI con mensajes o títulos de varias líneas.
-- Las notificaciones por correo incluyen enlaces a adjuntos, nombres de archivo y fechas de caducidad; el correo saliente admite autenticación SMTP LOGIN.
-- Actualiza start-sdk a 3.0.6.
+- Recupera los mensajes perdidos cuando un cliente se reconecta durante la publicación, comprobando cada segundo los mensajes recién guardados en caché.
+- Corrige las estadísticas de uso cuando una cuenta toma el control de la conexión de un visitante anónimo.
+- Los scripts personalizados que usan \`since=<message ID>\` ahora pueden recibir mensajes duplicados del mismo segundo. Elimina los duplicados por ID de mensaje; las aplicaciones oficiales y la aplicación web ya lo hacen.
 
-Notas de la versión completas: https://github.com/binwiederhier/ntfy/blob/v2.30.0/docs/releases.md#ntfy-server-v2300`,
-    de_DE: `Aktualisiert ntfy auf 2.30.0.
+Notas de la versión completas: https://github.com/binwiederhier/ntfy/releases/tag/v2.31.0`,
+    de_DE: `Aktualisiert ntfy auf 2.31.0.
 
-- Behebt doppelte Nachrichten in der Web-App, wenn Nachrichtenaktualisierungen über Hintergrundabfragen eintreffen.
-- Behebt Datei-Uploads über die CLI mit mehrzeiligen Nachrichten oder Titeln.
-- E-Mail-Benachrichtigungen enthalten Anhang-Links, Dateinamen und Ablaufzeiten; ausgehende E-Mails unterstützen SMTP-LOGIN-Authentifizierung.
-- Aktualisiert start-sdk auf 3.0.6.
+- Stellt Nachrichten wieder zu, die beim erneuten Verbinden eines Clients während der Veröffentlichung verpasst wurden, indem neu zwischengespeicherte Nachrichten jede Sekunde geprüft werden.
+- Korrigiert die Nutzungsstatistiken, wenn ein Konto die Verbindung eines anonymen Besuchers übernimmt.
+- Eigene Skripte mit \`since=<message ID>\` können nun doppelte Nachrichten aus derselben Sekunde erhalten. Duplikate anhand der Nachrichten-ID entfernen; die offiziellen Apps und die Web-App tun dies bereits.
 
-Vollständige Versionshinweise: https://github.com/binwiederhier/ntfy/blob/v2.30.0/docs/releases.md#ntfy-server-v2300`,
-    pl_PL: `Aktualizuje ntfy do 2.30.0.
+Vollständige Versionshinweise: https://github.com/binwiederhier/ntfy/releases/tag/v2.31.0`,
+    pl_PL: `Aktualizuje ntfy do 2.31.0.
 
-- Naprawia duplikaty wiadomości w aplikacji internetowej, gdy aktualizacje wiadomości docierają przez odpytywanie w tle.
-- Naprawia przesyłanie plików przez CLI z wielowierszowymi wiadomościami lub tytułami.
-- Powiadomienia e-mail zawierają odnośniki do załączników, nazwy plików i terminy wygaśnięcia; poczta wychodząca obsługuje uwierzytelnianie SMTP LOGIN.
-- Aktualizuje start-sdk do 3.0.6.
+- Odzyskuje wiadomości pominięte, gdy klient ponownie łączy się podczas publikowania, sprawdzając co sekundę nowo zapisane wiadomości w pamięci podręcznej.
+- Poprawia statystyki użycia, gdy konto przejmuje połączenie anonimowego użytkownika.
+- Własne skrypty używające \`since=<message ID>\` mogą teraz otrzymywać duplikaty wiadomości z tej samej sekundy. Usuwaj duplikaty według identyfikatora wiadomości; oficjalne aplikacje i aplikacja internetowa już to robią.
 
-Pełne informacje o wydaniu: https://github.com/binwiederhier/ntfy/blob/v2.30.0/docs/releases.md#ntfy-server-v2300`,
-    fr_FR: `Met à jour ntfy vers 2.30.0.
+Pełne informacje o wydaniu: https://github.com/binwiederhier/ntfy/releases/tag/v2.31.0`,
+    fr_FR: `Met à jour ntfy vers 2.31.0.
 
-- Corrige les messages en double dans l'application web lorsque leurs mises à jour arrivent par interrogation en arrière-plan.
-- Corrige l'envoi de fichiers par la CLI avec des messages ou des titres sur plusieurs lignes.
-- Les notifications par e-mail incluent les liens vers les pièces jointes, leurs noms et leurs dates d'expiration ; les e-mails sortants prennent en charge l'authentification SMTP LOGIN.
-- Met à jour start-sdk vers 3.0.6.
+- Récupère les messages manqués lorsqu'un client se reconnecte pendant leur publication, en vérifiant chaque seconde les messages nouvellement mis en cache.
+- Corrige les statistiques d'utilisation lorsqu'un compte reprend la connexion d'un visiteur anonyme.
+- Les scripts personnalisés utilisant \`since=<message ID>\` peuvent désormais recevoir des messages en double de la même seconde. Dédupliquez par identifiant de message ; les applications officielles et l'application web le font déjà.
 
-Notes de version complètes : https://github.com/binwiederhier/ntfy/blob/v2.30.0/docs/releases.md#ntfy-server-v2300`,
+Notes de version complètes : https://github.com/binwiederhier/ntfy/releases/tag/v2.31.0`,
   },
   migrations: {
     up: async () => {},
