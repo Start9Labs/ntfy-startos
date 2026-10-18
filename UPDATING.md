@@ -4,10 +4,11 @@ This package has a single upstream source: the `binwiederhier/ntfy` Docker image
 
 ## Determining the upstream version
 
-- **ntfy** ([binwiederhier/ntfy](https://github.com/binwiederhier/ntfy)) — latest GitHub release (canonical):
+- **ntfy** ([binwiederhier/ntfy](https://github.com/binwiederhier/ntfy)) — inspect tags and releases, selecting the newest stable version rather than relying on GitHub's Latest badge:
 
   ```sh
-  gh release view -R binwiederhier/ntfy --json tagName -q .tagName
+  gh api 'repos/binwiederhier/ntfy/tags?per_page=100' --jq '.[].name'
+  gh api 'repos/binwiederhier/ntfy/releases?per_page=100' --jq '.[] | select(.draft == false and .prerelease == false) | .tag_name'
   ```
 
   Cross-check against Docker Hub ([binwiederhier/ntfy](https://hub.docker.com/r/binwiederhier/ntfy/tags)) to confirm the matching image tag has been published:
