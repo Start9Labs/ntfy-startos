@@ -21,4 +21,4 @@ This package has a single upstream source: the `binwiederhier/ntfy` Docker image
 
 ## Applying the bump
 
-- `startos/manifest/index.ts` — set `images.main.source.dockerTag` to `binwiederhier/ntfy:v<new version>`.
+- `startos/manifest/index.ts` — set the `IMAGE` build arg of `images.main.source.dockerBuild` to `binwiederhier/ntfy:v<new version>`.

@@ -35,7 +35,7 @@
 
 ## Image and Container Runtime
 
-One upstream image, unmodified.
+One upstream image, with its CA store upgraded by the root `Dockerfile` — a temporary layer that comes out once upstream ships an image built on a fixed store.
 
 | Property      | Value                                     |
 | ------------- | ----------------------------------------- |
