@@ -1,48 +1,48 @@
 import { VersionInfo, IMPOSSIBLE } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '2.35.0:0',
+  version: '2.36.0:0',
   releaseNotes: {
-    en_US: `Updated ntfy to 2.35.0.
+    en_US: `Updated ntfy to 2.36.0.
 
-- Fixes a Matrix push gateway authorization bypass that could store messages under protected topics when using SQLite.
-- Fixes intermittent authorization failures and account-handler crashes during concurrent requests from the same IP.
-- Tier changes preserve usage already spent, daily email limits are enforced strictly, and rejected attachment bytes no longer count against the bandwidth limit.
-- Updated start-sdk to 3.1.1.
+- Daily message, email, and phone-call counts survive restarts and reset on each visitor's own 24-hour schedule, shown on the account page.
+- Fixes deleted notifications reappearing, read state being lost, and duplicate alerts after polling or reconnecting in the web app.
+- Back up before updating: ntfy automatically upgrades the user database and resets everyone's daily counts once during the upgrade. Use a pre-update backup to roll back.
+- Configuration validation is stricter: previously accepted invalid settings can now prevent startup. Check the service logs if startup fails, especially with hand-edited settings.
 
-Full release notes: https://github.com/binwiederhier/ntfy/releases/tag/v2.35.0`,
-    es_ES: `Actualiza ntfy a 2.35.0.
+Full release notes: https://github.com/binwiederhier/ntfy/releases/tag/v2.36.0`,
+    es_ES: `Actualiza ntfy a 2.36.0.
 
-- Corrige una omisión de autorización en la pasarela push de Matrix que permitía guardar mensajes en temas protegidos al usar SQLite.
-- Corrige fallos intermitentes de autorización y bloqueos en los manejadores de cuentas durante solicitudes simultáneas desde la misma IP.
-- Los cambios de nivel conservan el consumo acumulado, los límites diarios de correo se aplican estrictamente y los bytes de adjuntos rechazados ya no cuentan para el límite de ancho de banda.
-- Actualiza start-sdk a 3.1.1.
+- Los contadores diarios de mensajes, correos y llamadas sobreviven a los reinicios y se restablecen según el ciclo de 24 horas de cada visitante, indicado en la página de la cuenta.
+- Corrige la reaparición de notificaciones eliminadas, la pérdida del estado de lectura y las alertas duplicadas tras el sondeo o la reconexión en la aplicación web.
+- Haz una copia de seguridad antes de actualizar: ntfy actualiza automáticamente la base de datos de usuarios y reinicia una vez los contadores diarios de todos durante la actualización. Para volver atrás, utiliza una copia anterior a la actualización.
+- La validación de la configuración es más estricta: los ajustes no válidos que antes se aceptaban pueden impedir el inicio. Revisa los registros del servicio si no arranca, especialmente con ajustes editados a mano.
 
-Notas de la versión completas: https://github.com/binwiederhier/ntfy/releases/tag/v2.35.0`,
-    de_DE: `Aktualisiert ntfy auf 2.35.0.
+Notas de la versión completas: https://github.com/binwiederhier/ntfy/releases/tag/v2.36.0`,
+    de_DE: `Aktualisiert ntfy auf 2.36.0.
 
-- Behebt eine Umgehung der Autorisierung im Matrix-Push-Gateway, durch die Nachrichten bei Verwendung von SQLite unter geschützten Themen gespeichert werden konnten.
-- Behebt sporadische Autorisierungsfehler und Abstürze der Kontoverarbeitung bei gleichzeitigen Anfragen von derselben IP-Adresse.
-- Tarifwechsel erhalten den bisherigen Verbrauch, tägliche E-Mail-Limits werden strikt eingehalten und abgelehnte Anhang-Bytes zählen nicht mehr zum Bandbreitenlimit.
-- Aktualisiert start-sdk auf 3.1.1.
+- Tägliche Nachrichten-, E-Mail- und Anrufzähler bleiben nach Neustarts erhalten und werden nach dem eigenen 24-Stunden-Zyklus jedes Besuchers zurückgesetzt, der auf der Kontoseite angezeigt wird.
+- Behebt wiederkehrende gelöschte Benachrichtigungen, verlorene Lesemarkierungen und doppelte Hinweise nach Abfragen oder erneutem Verbinden in der Web-App.
+- Vor dem Update ein Backup erstellen: ntfy aktualisiert die Benutzerdatenbank automatisch und setzt dabei alle täglichen Zähler einmal zurück. Für eine Rückkehr zur alten Version ein Backup von vor dem Update verwenden.
+- Die Konfiguration wird strenger geprüft: Bisher akzeptierte ungültige Einstellungen können den Start verhindern. Bei Startfehlern die Dienstprotokolle prüfen, insbesondere bei manuell bearbeiteten Einstellungen.
 
-Vollständige Versionshinweise: https://github.com/binwiederhier/ntfy/releases/tag/v2.35.0`,
-    pl_PL: `Aktualizuje ntfy do 2.35.0.
+Vollständige Versionshinweise: https://github.com/binwiederhier/ntfy/releases/tag/v2.36.0`,
+    pl_PL: `Aktualizuje ntfy do 2.36.0.
 
-- Naprawia obejście autoryzacji w bramie powiadomień Matrix, które pozwalało zapisywać wiadomości w chronionych tematach przy użyciu SQLite.
-- Naprawia sporadyczne błędy autoryzacji i awarie obsługi kont podczas równoczesnych żądań z tego samego adresu IP.
-- Zmiany planu zachowują dotychczasowe zużycie, dzienne limity wiadomości e-mail są ściśle egzekwowane, a odrzucone bajty załączników nie wliczają się już do limitu transferu.
-- Aktualizuje start-sdk do 3.1.1.
+- Dzienne liczniki wiadomości, e-maili i połączeń telefonicznych są zachowywane po restarcie i zerowane zgodnie z własnym cyklem 24-godzinnym każdego odwiedzającego, widocznym na stronie konta.
+- Naprawia ponowne pojawianie się usuniętych powiadomień, utratę stanu przeczytania i powielone alerty po odpytywaniu lub ponownym połączeniu w aplikacji internetowej.
+- Przed aktualizacją utwórz kopię zapasową: ntfy automatycznie aktualizuje bazę użytkowników i jednorazowo zeruje dzienne liczniki wszystkich użytkowników. Aby wrócić do starszej wersji, użyj kopii sprzed aktualizacji.
+- Walidacja konfiguracji jest bardziej rygorystyczna: wcześniej akceptowane nieprawidłowe ustawienia mogą uniemożliwić uruchomienie. W razie problemów sprawdź dzienniki usługi, zwłaszcza przy ręcznie edytowanych ustawieniach.
 
-Pełne informacje o wydaniu: https://github.com/binwiederhier/ntfy/releases/tag/v2.35.0`,
-    fr_FR: `Met à jour ntfy vers 2.35.0.
+Pełne informacje o wydaniu: https://github.com/binwiederhier/ntfy/releases/tag/v2.36.0`,
+    fr_FR: `Met à jour ntfy vers 2.36.0.
 
-- Corrige un contournement de l'autorisation dans la passerelle push Matrix qui permettait de stocker des messages dans des sujets protégés avec SQLite.
-- Corrige les échecs d'autorisation intermittents et les plantages du traitement des comptes lors de requêtes simultanées depuis la même adresse IP.
-- Les changements de forfait conservent la consommation déjà effectuée, les limites quotidiennes d'e-mails sont strictement appliquées et les octets de pièces jointes refusés ne comptent plus dans la limite de bande passante.
-- Met à jour start-sdk vers 3.1.1.
+- Les compteurs quotidiens de messages, d'e-mails et d'appels survivent aux redémarrages et sont remis à zéro selon le cycle de 24 heures propre à chaque visiteur, affiché sur la page du compte.
+- Corrige la réapparition de notifications supprimées, la perte de l'état de lecture et les alertes en double après une interrogation ou une reconnexion dans l'application web.
+- Faites une sauvegarde avant la mise à jour : ntfy met automatiquement à niveau la base des utilisateurs et remet une fois à zéro les compteurs quotidiens de chacun. Pour revenir en arrière, utilisez une sauvegarde antérieure à la mise à jour.
+- La validation de la configuration est plus stricte : des paramètres invalides auparavant acceptés peuvent empêcher le démarrage. Consultez les journaux du service en cas d'échec, surtout avec des paramètres modifiés à la main.
 
-Notes de version complètes : https://github.com/binwiederhier/ntfy/releases/tag/v2.35.0`,
+Notes de version complètes : https://github.com/binwiederhier/ntfy/releases/tag/v2.36.0`,
   },
   migrations: {
     up: async () => {},
