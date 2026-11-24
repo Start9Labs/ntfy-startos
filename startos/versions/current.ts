@@ -1,18 +1,18 @@
 import { VersionInfo, IMPOSSIBLE } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '2.38.1:0',
+  version: '2.38.2:0',
   releaseNotes: {
     en_US:
-      'Updated ntfy to 2.38.1, a security release. Crafted message templates can no longer crash the server, exhaust its memory or run past their time limit, and slow or unresponsive web push endpoints and attachment uploads no longer tie up memory and connections. Full notes: https://github.com/binwiederhier/ntfy/releases/tag/v2.38.1',
+      'Updated ntfy to 2.38.2, a security release. Clients can no longer spoof their IP address to get around rate and login limits, users can no longer reserve topics covered by an admin wildcard rule or on a tier without reservations, and e-mail publishing is no longer open to a memory exhaustion attack. Full notes: https://github.com/binwiederhier/ntfy/releases/tag/v2.38.2',
     es_ES:
-      'ntfy actualizado a 2.38.1, una versión de seguridad. Las plantillas de mensaje manipuladas ya no pueden bloquear el servidor, agotar su memoria ni superar su límite de tiempo, y los destinos de notificaciones web push lentos o que no responden y las subidas de adjuntos ya no acaparan memoria ni conexiones. Notas completas: https://github.com/binwiederhier/ntfy/releases/tag/v2.38.1',
+      'ntfy actualizado a 2.38.2, una versión de seguridad. Los clientes ya no pueden falsificar su dirección IP para eludir los límites de solicitudes e inicios de sesión, los usuarios ya no pueden reservar temas cubiertos por una regla comodín del administrador ni en un nivel sin reservas, y la publicación por correo electrónico ya no es vulnerable a un ataque de agotamiento de memoria. Notas completas: https://github.com/binwiederhier/ntfy/releases/tag/v2.38.2',
     de_DE:
-      'ntfy auf 2.38.1 aktualisiert, ein Sicherheitsrelease. Manipulierte Nachrichtenvorlagen können den Server nicht mehr zum Absturz bringen, seinen Speicher erschöpfen oder ihr Zeitlimit überschreiten, und langsame oder nicht reagierende Web-Push-Endpunkte sowie Anhang-Uploads binden keinen Speicher und keine Verbindungen mehr. Vollständige Hinweise: https://github.com/binwiederhier/ntfy/releases/tag/v2.38.1',
+      'ntfy auf 2.38.2 aktualisiert, ein Sicherheitsrelease. Clients können ihre IP-Adresse nicht mehr fälschen, um Anfrage- und Anmeldelimits zu umgehen, Benutzer können keine Themen mehr reservieren, die von einer Platzhalterregel des Administrators abgedeckt sind oder deren Stufe keine Reservierungen erlaubt, und die Veröffentlichung per E-Mail ist nicht mehr anfällig für einen Speichererschöpfungsangriff. Vollständige Hinweise: https://github.com/binwiederhier/ntfy/releases/tag/v2.38.2',
     pl_PL:
-      'Zaktualizowano ntfy do wersji 2.38.1, wydania z poprawkami bezpieczeństwa. Spreparowane szablony wiadomości nie mogą już zawiesić serwera, wyczerpać jego pamięci ani przekroczyć limitu czasu, a wolne lub nieodpowiadające punkty web push oraz przesyłanie załączników nie blokują już pamięci i połączeń. Pełne informacje: https://github.com/binwiederhier/ntfy/releases/tag/v2.38.1',
+      'Zaktualizowano ntfy do wersji 2.38.2, wydania z poprawkami bezpieczeństwa. Klienci nie mogą już podszywać się pod inny adres IP, aby obejść limity żądań i logowań, użytkownicy nie mogą już rezerwować tematów objętych regułą wieloznaczną administratora ani na poziomie bez rezerwacji, a publikowanie przez e-mail nie jest już podatne na atak wyczerpania pamięci. Pełne informacje: https://github.com/binwiederhier/ntfy/releases/tag/v2.38.2',
     fr_FR:
-      'ntfy mis à jour vers 2.38.1, une version de sécurité. Les modèles de message malveillants ne peuvent plus faire planter le serveur, épuiser sa mémoire ni dépasser leur limite de temps, et les points de terminaison web push lents ou injoignables ainsi que les envois de pièces jointes ne monopolisent plus la mémoire ni les connexions. Notes complètes : https://github.com/binwiederhier/ntfy/releases/tag/v2.38.1',
+      "ntfy mis à jour vers 2.38.2, une version de sécurité. Les clients ne peuvent plus usurper leur adresse IP pour contourner les limites de requêtes et de connexions, les utilisateurs ne peuvent plus réserver de sujets couverts par une règle générique de l'administrateur ni sur un niveau sans réservations, et la publication par e-mail n'est plus exposée à une attaque par épuisement de mémoire. Notes complètes : https://github.com/binwiederhier/ntfy/releases/tag/v2.38.2",
   },
   migrations: {
     up: async () => {},
