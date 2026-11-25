@@ -4,6 +4,7 @@ import {
   attachmentDir,
   authFile,
   cacheFile,
+  metricsListen,
   uiPort,
   webPushFile,
 } from '../utils'
@@ -17,6 +18,7 @@ const shape = z.looseObject({
   'behind-proxy': z.literal(true).catch(true),
   'enable-login': z.literal(true).catch(true),
   'enable-metrics': z.literal(true).catch(true),
+  'metrics-listen-http': z.literal(metricsListen).catch(metricsListen),
   'attachment-cache-dir': z.literal(attachmentDir).catch(attachmentDir),
   'web-push-file': z.literal(webPushFile).catch(webPushFile),
 

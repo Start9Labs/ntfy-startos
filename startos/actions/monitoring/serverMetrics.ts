@@ -1,6 +1,6 @@
 import { i18n } from '../../i18n'
 import { sdk } from '../../sdk'
-import { adminAuth } from '../../utils'
+import { metricsListen } from '../../utils'
 
 function parseMetric(text: string, name: string): string | null {
   const match = text.match(new RegExp(`^${name}\\s+([\\d.e+\\-]+)`, 'm'))
@@ -32,11 +32,7 @@ export const serverMetrics = sdk.Action.withoutInput(
   }),
 
   async ({ effects }) => {
-    const { baseUrl, authHeader } = await adminAuth()
-
-    const res = await fetch(`${baseUrl}/metrics`, {
-      headers: { Authorization: authHeader },
-    })
+    const res = await fetch(`http://${metricsListen}/metrics`)
     if (!res.ok) {
       throw new Error(
         i18n('Failed to fetch metrics: HTTP ${status}', {

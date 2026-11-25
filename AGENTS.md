@@ -35,6 +35,6 @@ verified, tried, and decided belongs in the commit message and the PR body.
 ## This repo
 
 - **Set Admin Password must `touch` the auth file before `ntfy user add`**, which refuses a missing file; a zero-byte one passes and ntfy creates its tables on first open.
-- **Keep the admin token, never the admin password.** The monitoring actions authenticate with the token, which survives password rotation.
+- **Keep the admin token, never the admin password.** Server Stats and the user actions authenticate with the token, which survives password rotation.
 - **Provision/Revoke Publisher are an API to dependents (canary today).** Don't change their ids, input shapes, or the order of Provision's result members, which canary reads by position; and keep the account tied to `caller`, never to the input.
 - **canary imports `uiHostId` and `uiInterfaceId` from `startos/utils.ts`** — renaming or moving them breaks its build.
