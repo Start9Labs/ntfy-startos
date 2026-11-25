@@ -3,6 +3,7 @@ import { sdk } from './sdk'
 import { storeJson } from './fileModels/store.json'
 
 export const uiPort = 80
+export const metricsListen = '127.0.0.1:9090'
 export const dataDir = '/data'
 
 // Host id (the `sdk.MultiHost.of` group) vs. the interface id exported on it —
