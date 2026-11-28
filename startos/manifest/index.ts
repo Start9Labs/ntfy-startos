@@ -14,7 +14,7 @@ export const manifest = setupManifest({
   images: {
     main: {
       source: {
-        dockerTag: 'binwiederhier/ntfy:v2.38.2',
+        dockerTag: 'binwiederhier/ntfy:v2.38.3',
       },
       arch: ['x86_64', 'aarch64'],
     },
